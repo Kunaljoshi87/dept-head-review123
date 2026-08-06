@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Department Head Review — Mega Engineering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://js.zohostatic.com/creator/widgets/version/1.0/widgetsdk-min.js"></script>
+<style>
+  :root{ --bg:#F4F6F8; --panel:#FFFFFF; --line:#D7DEE5; --navy:#1E4E8C; --amber:#B7791F; --red:#C0392B; --green:#1E8E5A; --text:#1F2937; --muted:#6B7A8F; }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;}
+  body{padding:24px 28px 90px; min-height:100vh;}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif; margin:0;}
+  input,textarea,select{ background:#F9FAFB; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif; font-size:13px; padding:8px 10px; width:100%; outline:none; }
+  input:disabled,textarea:disabled,select:disabled{background:#EEF1F4; color:var(--muted);}
+  label{font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); display:block; margin-bottom:4px;}
+  button{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; background:transparent; border:1px solid var(--navy); color:var(--navy); padding:9px 16px; cursor:pointer; }
+  button:hover{background:var(--navy); color:#fff;}
+  button.solid{background:var(--navy); color:#fff;}
+  button.danger{border-color:var(--red); color:var(--red);}
+  button.danger:hover{background:var(--red); color:#fff;}
+  button.green{border-color:var(--green); color:var(--green);}
+  button.green:hover{background:var(--green); color:#fff;}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  .section{border:1px solid var(--line); background:var(--panel); padding:20px 22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(31,41,55,.05);}
+  .section-head{border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:14px; font-size:16px; color:var(--navy); font-weight:600;}
+  .top-grid{display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:14px; align-items:end;}
+  .readonly-box{background:#EEF1F4; padding:8px 10px; font-size:13px; border:1px solid var(--line); min-height:20px;}
+  table{width:100%; border-collapse:collapse; margin-top:8px;}
+  th{text-align:left; font-size:10px; text-transform:uppercase; color:var(--muted); padding:6px; border-bottom:1px solid var(--line);}
+  td{padding:6px; border-bottom:1px solid var(--line); vertical-align:top; font-size:13px;}
+  .kra-card{border:1px dashed var(--line); padding:14px; margin-bottom:14px;}
+  .status-pill{font-family:'IBM Plex Mono',monospace; font-size:11px; padding:3px 10px; border:1px solid var(--line);}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .three-col{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+  .footer-bar{position:fixed; bottom:0; left:0; right:0; background:var(--panel); border-top:1px solid var(--line); padding:12px 28px; display:flex; justify-content:flex-end; gap:10px; z-index:10;}
+  .status-msg{font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace; margin-right:auto; align-self:center;}
+  .status-msg.ok{color:var(--green);} .status-msg.bad{color:var(--red);}
+
+  /* PRINT TEMPLATE */
+  #printArea{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{position:absolute; top:0; left:0; width:100%; display:block; padding:20px;}
+    .no-print{display:none !important;}
+  }
+  .pf-header{display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:12px;}
+  .pf-quarters{display:flex; gap:6px; font-size:11px;}
+  .pf-quarters span{border:1px solid #000; padding:3px 8px;}
+  .pf-quarters span.active{background:#000; color:#fff;}
+  .pf-table{width:100%; border-collapse:collapse; font-size:11px; margin-top:8px;}
+  .pf-table th, .pf-table td{border:1px solid #000; padding:5px 7px; vertical-align:top;}
+  .pf-target-title{font-weight:700; margin-top:10px;}
+</style>
+</head>
+<body>
+
+<div class="section no-print">
+  <div class="section-head">Department Head Review</div>
+  <div class="top-grid">
+    <div><label>Employee</label><select id="empSelect"><option value="">Loading…</option></select></div>
+    <div><label>Quarter</label>
+      <select id="quarterSelect">
+        <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+      </select>
+    </div>
+    <div><label>Year</label>
+      <select id="yearSelect">
+        <option>2024</option><option>2025</option><option selected>2026</option><option>2027</option><option>2028</option>
+      </select>
+    </div>
+    <div><button class="solid" onclick="loadAppraisal()">Load Appraisal</button></div>
+  </div>
+</div>
+
+<div id="resultArea" style="display:none;">
+
+  <div class="section no-print">
+    <div class="section-head">Employee Details</div>
+    <div class="three-col">
+      <div><label>Employee</label><div class="readonly-box" id="rvEmployee">—</div></div>
+      <div><label>Department</label><div class="readonly-box" id="rvDepartment">—</div></div>
+      <div><label>Status</label><div class="readonly-box"><span class="status-pill" id="rvStatus">—</span></div></div>
+    </div>
+  </div>
+
+  <div class="section no-print">
+    <div class="section-head">KRA &amp; Goals</div>
+    <div id="kraGoalsArea"></div>
+  </div>
+
+  <div class="section no-print">
+    <div class="section-head">Competencies</div>
+    <table>
+      <thead><tr><th>Attribute</th><th style="width:120px;">Self Rating</th><th style="width:160px;">Appraiser Rating</th></tr></thead>
+      <tbody id="competencyBody"></tbody>
+    </table>
+  </div>
+
+  <div class="section no-print">
+    <div class="section-head">Overall Review</div>
+    <div class="two-col">
+      <div><label>Facilitating Factors</label><div class="readonly-box" id="rvFac">—</div></div>
+      <div><label>Constraining Factors</label><div class="readonly-box" id="rvCon">—</div></div>
+      <div><label>Outstanding Achievement</label><div class="readonly-box" id="rvOut">—</div></div>
+      <div><label>My Learnings</label><div class="readonly-box" id="rvLearn">—</div></div>
+    </div>
+    <div style="margin-top:14px;"><label>Appraiser Comments</label><textarea id="apprCommentsInput" rows="3"></textarea></div>
+    <div class="three-col" style="margin-top:14px;">
+      <div><label>Overall Rating</label>
+        <select id="overallRatingInput">
+          <option>Outstanding</option><option>Exceeds Expectations</option><option>Meets Expectations</option><option>Needs Improvement</option><option>Unacceptable</option>
+        </select>
+      </div>
+      <div><label>KRA Score</label><input type="number" id="kraScoreInput"></div>
+      <div><label>Competency Score</label><input type="number" id="compScoreInput"></div>
+    </div>
+    <div style="margin-top:14px; max-width:200px;"><label>Final Score</label><input type="number" id="finalScoreInput"></div>
+    <div id="rejectBox" style="margin-top:14px; display:none;">
+      <label>Rejection Comments</label>
+      <textarea id="rejectCommentsInput" rows="2"></textarea>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-bar no-print">
+  <span class="status-msg" id="statusMsg"></span>
+  <button onclick="exportPDF()">Download PDF</button>
+  <button id="saveDraftBtn" onclick="saveDraft()" disabled>Save Draft</button>
+  <button class="danger" id="rejectBtn" onclick="rejectAppraisal()" disabled>Reject</button>
+  <button class="solid green" id="approveBtn" onclick="approveAppraisal()" disabled>Approve</button>
+</div>
+
+<!-- ============ PRINTABLE TEMPLATE ============ -->
+<div id="printArea">
+  <div class="pf-header">
+    <div style="font-size:20px; font-weight:700;">MEGA ENGINEERING</div>
+    <div style="font-size:14px;">Performance Appraisal Form</div>
+  </div>
+  <div class="pf-quarters" id="pfQuarters"></div>
+  <div style="margin-top:12px; font-size:12px;">
+    <div><strong>Name:</strong> <span id="pfName"></span></div>
+    <div><strong>Department:</strong> <span id="pfDept"></span></div>
+    <div><strong>Name of Appraiser:</strong> <span id="pfAppraiser"></span></div>
+  </div>
+  <div id="pfTargets"></div>
+  <table class="pf-table">
+    <tr><td style="width:30%;"><strong>Facilitating Factors</strong></td><td id="pfFac"></td></tr>
+    <tr><td><strong>Constraining Factors</strong></td><td id="pfCon"></td></tr>
+    <tr><td><strong>Outstanding Achievement</strong></td><td id="pfOut"></td></tr>
+    <tr><td><strong>Comments of Appraiser</strong></td><td id="pfComments"></td></tr>
+  </table>
+  <div class="pf-target-title">Appraisal on Role Attributes (20% weightage)</div>
+  <table class="pf-table">
+    <thead><tr><th>Attribute</th><th style="width:100px;">Rating</th></tr></thead>
+    <tbody id="pfCompetencyRows"></tbody>
+  </table>
+  <div class="pf-target-title">My Learnings</div>
+  <div style="font-size:11px; border:1px solid #000; padding:8px;" id="pfLearnings"></div>
+  <div class="pf-target-title">Overall Performance Rating</div>
+  <div style="font-size:12px;" id="pfOverall"></div>
+</div>
+
+<script>
+const APP_NAME = "assest-management";
+const REPORTS = { employees:"All_Employees", kra:"KRA_Report", goal:"Goal_Report", competency:"Competency_Report", review:"Review_Report" };
+const state = { employees:[], review:null, kras:[], competencies:[] };
+
+function setStatus(msg, ok){
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg; el.classList.remove('ok','bad');
+  if(ok===true) el.classList.add('ok'); if(ok===false) el.classList.add('bad');
+}
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function empDisplayName(rec){
+  const v = rec.Employee_Name;
+  if(!v) return rec.ID;
+  if(typeof v === 'string') return v;
+  if(typeof v === 'object') return [v.prefix,v.first_name,v.last_name,v.suffix].filter(Boolean).join(' ').trim() || rec.ID;
+  return String(v);
+}
+function fetchEmployees(){
+  return ZOHO.CREATOR.API.getAllRecords({ appName: APP_NAME, reportName: REPORTS.employees, page:1, pageSize:200 })
+    .then(resp => {
+      const data = (resp && resp.data) ? resp.data : [];
+      state.employees = data.map(r => ({ ID:r.ID, name:empDisplayName(r), department:r.Department||'' }));
+      return ZOHO.CREATOR.API.getAllRecords({ appName: APP_NAME, reportName: REPORTS.review, page:1, pageSize:200 });
+    })
+    .then(resp => {
+      const reviews = (resp && resp.data) ? resp.data : [];
+      const seenIds = new Set();
+      const withReviews = [];
+      reviews.forEach(r => {
+        const empId = r.Employee_Lookup ? (r.Employee_Lookup.ID || r.Employee_Lookup) : '';
+        if(empId && !seenIds.has(empId)){
+          seenIds.add(empId);
+          const emp = state.employees.find(e => e.ID === empId);
+          if(emp) withReviews.push(emp);
+        }
+      });
+      document.getElementById('empSelect').innerHTML = '<option value="">— Select —</option>' +
+        withReviews.map(e => `<option value="${e.ID}">${escapeHtml(e.name)}</option>`).join('');
+    }).catch(err => { console.error('fetchEmployees error', err); });
+}
+
+function creatorUpdateRecord(reportName, id, data){
+  return ZOHO.CREATOR.API.updateRecord({ appName: APP_NAME, reportName: reportName, id: id, data: { "data": data } })
+    .then(resp => { if(resp && resp.code === 3000){ return resp.data; } throw resp; });
+}
+
+function loadAppraisal(){
+  const empId = document.getElementById('empSelect').value;
+  const quarter = document.getElementById('quarterSelect').value;
+  const year = document.getElementById('yearSelect').value;
+  if(!empId){ setStatus('❌ Select an employee first.', false); return; }
+  const emp = state.employees.find(e => e.ID === empId);
+  const empName = emp ? emp.name : '';
+
+  setStatus('Loading…', null);
+  document.getElementById('resultArea').style.display = 'none';
+
+  const reviewCfg = { appName: APP_NAME, reportName: REPORTS.review, criteria: `(Employee_Lookup == ${empId} && Quarter == "${quarter}" && Year_field == ${year})`, page:1, pageSize:1 };
+
+  ZOHO.CREATOR.API.getAllRecords(reviewCfg).then(resp => {
+    const records = (resp && resp.data) ? resp.data : [];
+    if(records.length === 0){ setStatus('No submitted appraisal found for this Employee/Quarter/Year.', false); return; }
+    state.review = records[0];
+
+    const kraCfg = { appName: APP_NAME, reportName: REPORTS.kra, criteria: `(Employee_Name == "${empName}" && Quarter == "${quarter}" && Year_field1 == ${year})`, page:1, pageSize:200 };
+    const compCfg = { appName: APP_NAME, reportName: REPORTS.competency, criteria: `(Employee_Name1 == "${empName}" && Quarter == "${quarter}" && Year_field1 == ${year})`, page:1, pageSize:200 };
+
+    Promise.all([
+      ZOHO.CREATOR.API.getAllRecords(kraCfg).then(r => r && r.data ? r.data : []).catch(()=>[]),
+      ZOHO.CREATOR.API.getAllRecords(compCfg).then(r => r && r.data ? r.data : []).catch(()=>[])
+    ]).then(([kraRecs, compRecs]) => {
+      state.competencies = compRecs;
+      const goalFetches = kraRecs.map(k => {
+        const goalCfg = { appName: APP_NAME, reportName: REPORTS.goal, criteria: `(KRA == ${k.ID})`, page:1, pageSize:200 };
+        return ZOHO.CREATOR.API.getAllRecords(goalCfg).then(r => ({ kra:k, goals:(r&&r.data)?r.data:[] })).catch(()=>({kra:k, goals:[]}));
+      });
+      Promise.all(goalFetches).then(pairs => {
+        state.kras = pairs;
+        renderResult();
+        setStatus('Loaded.', true);
+      });
+    });
+  }).catch(err => { console.error('LOAD ERROR', err); setStatus('Load failed — check console.', false); });
+}
+
+function renderResult(){
+  const r = state.review;
+  document.getElementById('resultArea').style.display = '';
+  document.getElementById('rvEmployee').textContent = document.getElementById('empSelect').selectedOptions[0].textContent;
+  document.getElementById('rvDepartment').textContent = r.Department || '—';
+  document.getElementById('rvStatus').textContent = r.Status || '—';
+
+  document.getElementById('kraGoalsArea').innerHTML = state.kras.map(pair => `
+    <div class="kra-card">
+      <strong>${escapeHtml(pair.kra.KRA_Name||'')}</strong>
+      <div style="font-size:12px; color:var(--muted); margin:4px 0 8px;">${escapeHtml(pair.kra.Description||'')} · Weightage ${escapeHtml(pair.kra.Weightage||'0')}%</div>
+      <table>
+        <thead><tr><th>Goal</th><th>Achievement</th><th style="width:90px;">Self</th><th style="width:120px;">Appraiser</th></tr></thead>
+        <tbody>
+          ${pair.goals.map(g => `
+            <tr>
+              <td>${escapeHtml(g.Goal_Name||'')}</td>
+              <td>${escapeHtml(g.Achievement||'—')}</td>
+              <td>${escapeHtml(g.Self_Rating||'—')}</td>
+              <td><input type="number" min="1" max="5" value="${escapeHtml(g.Appraiser_Rating||'')}" data-goal-id="${g.ID}" class="goal-appr-input" ${r.Status==='Approved'?'disabled':''}></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`).join('') || '<div style="color:var(--muted); font-size:13px;">No KRAs found.</div>';
+
+  document.getElementById('competencyBody').innerHTML = state.competencies.map(c => `
+    <tr>
+      <td>${escapeHtml(c.Attribute_Name||'')}</td>
+      <td>${escapeHtml(c.Rating||'—')}</td>
+      <td><input type="number" min="1" max="5" value="${escapeHtml(c.Appraiser_Rating||'')}" data-comp-id="${c.ID}" class="comp-appr-input" ${r.Status==='Approved'?'disabled':''}></td>
+    </tr>`).join('') || '<tr><td colspan="3" style="color:var(--muted);">No competencies found.</td></tr>';
+
+  document.getElementById('rvFac').textContent = r.Facilitating_Factors1 || '—';
+  document.getElementById('rvCon').textContent = r.Constraining_Factors || '—';
+  document.getElementById('rvOut').textContent = r.Outstanding_Achievement || '—';
+  document.getElementById('rvLearn').textContent = r.My_Learnings || '—';
+  document.getElementById('apprCommentsInput').value = r.Appraiser_Comments || '';
+  document.getElementById('overallRatingInput').value = r.Overall_Rating || 'Outstanding';
+  document.getElementById('kraScoreInput').value = r.KRA_Score || '';
+  document.getElementById('compScoreInput').value = r.Competency_Score || '';
+  document.getElementById('finalScoreInput').value = r.Final_Score || '';
+
+  const locked = r.Status === 'Approved';
+  document.getElementById('saveDraftBtn').disabled = locked;
+  document.getElementById('rejectBtn').disabled = locked;
+  document.getElementById('approveBtn').disabled = locked;
+  document.getElementById('apprCommentsInput').disabled = locked;
+  document.getElementById('overallRatingInput').disabled = locked;
+  document.getElementById('kraScoreInput').disabled = locked;
+  document.getElementById('compScoreInput').disabled = locked;
+  document.getElementById('finalScoreInput').disabled = locked;
+}
+
+function collectGoalUpdates(){
+  return Array.from(document.querySelectorAll('.goal-appr-input')).map(inp =>
+    creatorUpdateRecord(REPORTS.goal, inp.getAttribute('data-goal-id'), { Appraiser_Rating: inp.value }));
+}
+function collectCompUpdates(){
+  return Array.from(document.querySelectorAll('.comp-appr-input')).map(inp =>
+    creatorUpdateRecord(REPORTS.competency, inp.getAttribute('data-comp-id'), { Appraiser_Rating: inp.value }));
+}
+function collectReviewUpdate(extra){
+  return {
+    Appraiser_Comments: document.getElementById('apprCommentsInput').value,
+    Overall_Rating: document.getElementById('overallRatingInput').value,
+    KRA_Score: parseFloat(document.getElementById('kraScoreInput').value) || 0,
+    Competency_Score: parseFloat(document.getElementById('compScoreInput').value) || 0,
+    Final_Score: parseFloat(document.getElementById('finalScoreInput').value) || 0,
+    ...extra
+  };
+}
+
+function saveDraft(){
+  setStatus('Saving…', null);
+  Promise.all([...collectGoalUpdates(), ...collectCompUpdates()])
+    .then(() => creatorUpdateRecord(REPORTS.review, state.review.ID, collectReviewUpdate({})))
+    .then(() => { setStatus('✅ Draft saved.', true); loadAppraisal(); })
+    .catch(err => { console.error('SAVE DRAFT ERROR', err); setStatus('Save failed — check console.', false); });
+}
+function approveAppraisal(){
+  setStatus('Approving…', null);
+  Promise.all([...collectGoalUpdates(), ...collectCompUpdates()])
+    .then(() => creatorUpdateRecord(REPORTS.review, state.review.ID, collectReviewUpdate({ Status:"Approved" })))
+    .then(() => { setStatus('✅ Appraisal approved and locked.', true); loadAppraisal(); })
+    .catch(err => { console.error('APPROVE ERROR', err); setStatus('Approval failed — check console.', false); });
+}
+function rejectAppraisal(){
+  const box = document.getElementById('rejectBox');
+  if(box.style.display === 'none'){ box.style.display=''; return; }
+  const comments = document.getElementById('rejectCommentsInput').value;
+  if(!comments){ setStatus('❌ Enter rejection comments first.', false); return; }
+  setStatus('Rejecting…', null);
+  creatorUpdateRecord(REPORTS.review, state.review.ID, collectReviewUpdate({ Status:"Rejected", Rejection_Comments: comments }))
+    .then(() => { setStatus('Appraisal rejected.', true); loadAppraisal(); })
+    .catch(err => { console.error('REJECT ERROR', err); setStatus('Reject failed — check console.', false); });
+}
+
+/* ============ PDF EXPORT ============ */
+function exportPDF(){
+  if(!state.review){ setStatus('❌ Load an appraisal first.', false); return; }
+  const r = state.review;
+  const quarter = document.getElementById('quarterSelect').value;
+  const quarters = [
+    {id:'Q1', label:'Q1: April to June'}, {id:'Q2', label:'Q2: July to September'},
+    {id:'Q3', label:'Q3: October-December'}, {id:'Q4', label:'Q4: January to March'}
+  ];
+  document.getElementById('pfQuarters').innerHTML = quarters.map(q => `<span class="${q.id===quarter?'active':''}">${q.label}</span>`).join('');
+  document.getElementById('pfName').textContent = document.getElementById('empSelect').selectedOptions[0].textContent;
+  document.getElementById('pfDept').textContent = r.Department || '';
+  document.getElementById('pfAppraiser').textContent = r.Appraiser_Name || '';
+
+  document.getElementById('pfTargets').innerHTML = state.kras.map((pair,i) => `
+    <div class="pf-target-title">Target-${i+1}: ${escapeHtml(pair.kra.KRA_Name||'')}</div>
+    <table class="pf-table">
+      <thead><tr><th>Task / Achievement</th><th style="width:70px;">Self</th><th style="width:90px;">Appraiser</th></tr></thead>
+      <tbody>
+        ${pair.goals.map(g => `<tr><td>${escapeHtml(g.Goal_Name||'')} — ${escapeHtml(g.Achievement||'')}</td><td>${escapeHtml(g.Self_Rating||'')}</td><td>${escapeHtml(g.Appraiser_Rating||'')}</td></tr>`).join('')}
+      </tbody>
+    </table>`).join('');
+
+  document.getElementById('pfFac').textContent = r.Facilitating_Factors1 || '';
+  document.getElementById('pfCon').textContent = r.Constraining_Factors || '';
+  document.getElementById('pfOut').textContent = r.Outstanding_Achievement || '';
+  document.getElementById('pfComments').textContent = document.getElementById('apprCommentsInput').value || '';
+  document.getElementById('pfCompetencyRows').innerHTML = state.competencies.map(c =>
+    `<tr><td>${escapeHtml(c.Attribute_Name||'')}</td><td>${escapeHtml(c.Appraiser_Rating||c.Rating||'')}</td></tr>`).join('');
+  document.getElementById('pfLearnings').textContent = r.My_Learnings || '';
+  document.getElementById('pfOverall').innerHTML = `<strong>${escapeHtml(document.getElementById('overallRatingInput').value)}</strong> &nbsp;·&nbsp; Final Score: ${escapeHtml(document.getElementById('finalScoreInput').value)}`;
+
+  window.print();
+}
+
+/* ============ INIT ============ */
+if(window.ZOHO && ZOHO.CREATOR){
+  ZOHO.CREATOR.init().then(async function(){
+    setStatus('Connected — loading employees…', true);
+    await fetchEmployees();
+    setStatus('Ready.', true);
+  }).catch(function(err){ console.error('Widget init failed', err); setStatus('Widget not initialized — open inside Creator.', false); });
+} else {
+  setStatus('Zoho Creator SDK not detected — running standalone.', false);
+}
+</script>
+</body>
+</html>

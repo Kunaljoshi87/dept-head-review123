@@ -54,6 +54,18 @@
   .pf-table{width:100%; border-collapse:collapse; font-size:11px; margin-top:8px;}
   .pf-table th, .pf-table td{border:1px solid #000; padding:5px 7px; vertical-align:top;}
   .pf-target-title{font-weight:700; margin-top:10px;}
+
+  .pf-target-block{ border:1px solid #000; border-top:none; display:grid; grid-template-columns:1fr 70px 90px; }
+  .pf-target-block .pf-target-body{ border-right:1px solid #000; padding:8px; font-size:11px; }
+  .pf-target-block .pf-target-body strong{ display:block; margin-bottom:6px; }
+  .pf-target-block .pf-target-body ol{ margin:0 0 6px 18px; padding:0; }
+  .pf-target-block .pf-target-body ol li{ margin-bottom:4px; }
+  .pf-target-block .pf-target-body .pf-achv{ margin-top:6px; font-style:italic; }
+  .pf-rating-col{ display:flex; align-items:center; justify-content:center; padding:6px; border-right:1px solid #000; text-align:center; font-size:12px; font-weight:700; }
+  .pf-rating-col:last-child{ border-right:none; }
+  .pf-rating-head{ display:grid; grid-template-columns:1fr 70px 90px; border:1px solid #000; font-size:10px; font-weight:700; text-align:center; margin-top:10px; }
+  .pf-rating-head div{ padding:4px; border-right:1px solid #000; }
+  .pf-rating-head div:last-child{ border-right:none; }
 </style>
 </head>
 <body>
@@ -184,6 +196,30 @@ function empDisplayName(rec){
   if(typeof v === 'object') return [v.prefix,v.first_name,v.last_name,v.suffix].filter(Boolean).join(' ').trim() || rec.ID;
   return String(v);
 }
+
+/* ---- Robust "does this record belong to this employee?" check ----
+   Works no matter what the employee field is called (lookup / text / etc)
+   by scanning every field's value for the employee's ID or name. */
+function recordBelongsToEmployee(rec, empId, empName){
+  const nameLower = (empName||'').toLowerCase().trim();
+  for(const key in rec){
+    const val = rec[key];
+    if(val === null || val === undefined) continue;
+    if(typeof val === 'object'){
+      // lookup field -> usually has ID / zc_display_value
+      if(val.ID && String(val.ID) === String(empId)) return true;
+      if(val.zc_display_value && val.zc_display_value.toLowerCase().trim() === nameLower) return true;
+      const composed = [val.prefix,val.first_name,val.last_name,val.suffix].filter(Boolean).join(' ').trim().toLowerCase();
+      if(composed && composed === nameLower) return true;
+    } else {
+      const strVal = String(val).trim();
+      if(strVal === String(empId)) return true;
+      if(nameLower && strVal.toLowerCase() === nameLower) return true;
+    }
+  }
+  return false;
+}
+
 function fetchEmployees(){
   return ZOHO.CREATOR.API.getAllRecords({ appName: APP_NAME, reportName: REPORTS.employees, page:1, pageSize:200 })
     .then(resp => {
@@ -231,23 +267,47 @@ function loadAppraisal(){
     if(records.length === 0){ setStatus('No submitted appraisal found for this Employee/Quarter/Year.', false); return; }
     state.review = records[0];
 
-    const kraCfg = { appName: APP_NAME, reportName: REPORTS.kra, criteria: `(Employee_Name == "${empName}" && Quarter == "${quarter}" && Year_field1 == ${year})`, page:1, pageSize:200 };
-    const compCfg = { appName: APP_NAME, reportName: REPORTS.competency, criteria: `(Employee_Name1 == "${empName}" && Quarter == "${quarter}" && Year_field1 == ${year})`, page:1, pageSize:200 };
+    // Fetch KRA & Competency filtered only by Quarter/Year (safe fields),
+    // then match employee client-side so we don't depend on the exact
+    // employee field name/type in those reports.
+    const kraCfg = { appName: APP_NAME, reportName: REPORTS.kra, criteria: `(Quarter == "${quarter}" && Year_field1 == ${year})`, page:1, pageSize:200 };
+    const compCfg = { appName: APP_NAME, reportName: REPORTS.competency, criteria: `(Quarter == "${quarter}" && Year_field1 == ${year})`, page:1, pageSize:200 };
 
     Promise.all([
-      ZOHO.CREATOR.API.getAllRecords(kraCfg).then(r => r && r.data ? r.data : []).catch(()=>[]),
-      ZOHO.CREATOR.API.getAllRecords(compCfg).then(r => r && r.data ? r.data : []).catch(()=>[])
-    ]).then(([kraRecs, compRecs]) => {
-      state.competencies = compRecs;
-      const goalFetches = kraRecs.map(k => {
-        const goalCfg = { appName: APP_NAME, reportName: REPORTS.goal, criteria: `(KRA == ${k.ID})`, page:1, pageSize:200 };
-        return ZOHO.CREATOR.API.getAllRecords(goalCfg).then(r => ({ kra:k, goals:(r&&r.data)?r.data:[] })).catch(()=>({kra:k, goals:[]}));
-      });
-      Promise.all(goalFetches).then(pairs => {
-        state.kras = pairs;
-        renderResult();
-        setStatus('Loaded.', true);
-      });
+      ZOHO.CREATOR.API.getAllRecords(kraCfg).then(r => r && r.data ? r.data : []).catch(err => { console.error('KRA fetch error', err); return []; }),
+      ZOHO.CREATOR.API.getAllRecords(compCfg).then(r => r && r.data ? r.data : []).catch(err => { console.error('Competency fetch error', err); return []; })
+    ]).then(([kraAll, compAll]) => {
+      console.log('KRA sample record (for field-name reference):', kraAll[0]);
+      console.log('Competency sample record (for field-name reference):', compAll[0]);
+
+      const kraRecs = kraAll.filter(k => recordBelongsToEmployee(k, empId, empName));
+      state.competencies = compAll.filter(c => recordBelongsToEmployee(c, empId, empName));
+
+      if(kraRecs.length === 0){
+        console.warn('No KRA matched this employee. Check console sample record above for the correct employee field name.');
+      }
+
+      // Fetch ALL goals for this quarter/year once, then group under each KRA
+      // by matching KRA.ID against any field on the goal record.
+      const goalCfg = { appName: APP_NAME, reportName: REPORTS.goal, criteria: `(Quarter == "${quarter}" && Year_field1 == ${year})`, page:1, pageSize:500 };
+      ZOHO.CREATOR.API.getAllRecords(goalCfg).then(r => r && r.data ? r.data : []).catch(err => { console.error('Goal fetch error', err); return []; })
+        .then(goalAll => {
+          console.log('Goal sample record (for field-name reference):', goalAll[0]);
+          state.kras = kraRecs.map(k => {
+            const goals = goalAll.filter(g => {
+              for(const key in g){
+                const val = g[key];
+                if(val === null || val === undefined) continue;
+                if(typeof val === 'object' && val.ID && String(val.ID) === String(k.ID)) return true;
+                if(String(val) === String(k.ID)) return true;
+              }
+              return false;
+            });
+            return { kra:k, goals:goals };
+          });
+          renderResult();
+          setStatus('Loaded.', true);
+        });
     });
   }).catch(err => { console.error('LOAD ERROR', err); setStatus('Load failed — check console.', false); });
 }
@@ -275,7 +335,7 @@ function renderResult(){
             </tr>`).join('')}
         </tbody>
       </table>
-    </div>`).join('') || '<div style="color:var(--muted); font-size:13px;">No KRAs found.</div>';
+    </div>`).join('') || '<div style="color:var(--muted); font-size:13px;">No KRAs found. Check browser console for sample record — it shows the exact field names available so criteria can be tuned further.</div>';
 
   document.getElementById('competencyBody').innerHTML = state.competencies.map(c => `
     <tr>
@@ -349,7 +409,7 @@ function rejectAppraisal(){
     .catch(err => { console.error('REJECT ERROR', err); setStatus('Reject failed — check console.', false); });
 }
 
-/* ============ PDF EXPORT ============ */
+/* ============ PDF EXPORT (matches official Performance Appraisal Form) ============ */
 function exportPDF(){
   if(!state.review){ setStatus('❌ Load an appraisal first.', false); return; }
   const r = state.review;
@@ -363,21 +423,34 @@ function exportPDF(){
   document.getElementById('pfDept').textContent = r.Department || '';
   document.getElementById('pfAppraiser').textContent = r.Appraiser_Name || '';
 
-  document.getElementById('pfTargets').innerHTML = state.kras.map((pair,i) => `
-    <div class="pf-target-title">Target-${i+1}: ${escapeHtml(pair.kra.KRA_Name||'')}</div>
-    <table class="pf-table">
-      <thead><tr><th>Task / Achievement</th><th style="width:70px;">Self</th><th style="width:90px;">Appraiser</th></tr></thead>
-      <tbody>
-        ${pair.goals.map(g => `<tr><td>${escapeHtml(g.Goal_Name||'')} — ${escapeHtml(g.Achievement||'')}</td><td>${escapeHtml(g.Self_Rating||'')}</td><td>${escapeHtml(g.Appraiser_Rating||'')}</td></tr>`).join('')}
-      </tbody>
-    </table>`).join('');
+  document.getElementById('pfTargets').innerHTML =
+    `<div class="pf-rating-head"><div>Performance Parameter, Targets and Achievements</div><div>Self Rating</div><div>Appraiser's Rating</div></div>` +
+    state.kras.map((pair,i) => {
+      const selfVals = pair.goals.map(g => parseFloat(g.Self_Rating)).filter(v => !isNaN(v));
+      const apprVals = pair.goals.map(g => parseFloat(g.Appraiser_Rating)).filter(v => !isNaN(v));
+      const selfAvg = selfVals.length ? (selfVals.reduce((a,b)=>a+b,0)/selfVals.length).toFixed(1) : '';
+      const apprAvg = apprVals.length ? (apprVals.reduce((a,b)=>a+b,0)/apprVals.length).toFixed(1) : '';
+      return `
+      <div class="pf-target-block">
+        <div class="pf-target-body">
+          <strong>Target-${i+1}: ${escapeHtml(pair.kra.KRA_Name||'')}</strong>
+          ${escapeHtml(pair.kra.Description||'')}
+          <ol>
+            ${pair.goals.map(g => `<li>${escapeHtml(g.Goal_Name||'')}</li>`).join('') || '<li style="color:#666;">No goals listed</li>'}
+          </ol>
+          <div class="pf-achv"><strong>Achievement:</strong> ${pair.goals.map(g => escapeHtml(g.Achievement||'')).filter(Boolean).join('; ') || '—'}</div>
+        </div>
+        <div class="pf-rating-col">${selfAvg}</div>
+        <div class="pf-rating-col">${apprAvg}</div>
+      </div>`;
+    }).join('');
 
   document.getElementById('pfFac').textContent = r.Facilitating_Factors1 || '';
   document.getElementById('pfCon').textContent = r.Constraining_Factors || '';
   document.getElementById('pfOut').textContent = r.Outstanding_Achievement || '';
   document.getElementById('pfComments').textContent = document.getElementById('apprCommentsInput').value || '';
   document.getElementById('pfCompetencyRows').innerHTML = state.competencies.map(c =>
-    `<tr><td>${escapeHtml(c.Attribute_Name||'')}</td><td>${escapeHtml(c.Appraiser_Rating||c.Rating||'')}</td></tr>`).join('');
+    `<tr><td>${escapeHtml(c.Attribute_Name||'')}</td><td>${escapeHtml(c.Appraiser_Rating||c.Rating||'')}</td></tr>`).join('') || '<tr><td colspan="2">—</td></tr>';
   document.getElementById('pfLearnings').textContent = r.My_Learnings || '';
   document.getElementById('pfOverall').innerHTML = `<strong>${escapeHtml(document.getElementById('overallRatingInput').value)}</strong> &nbsp;·&nbsp; Final Score: ${escapeHtml(document.getElementById('finalScoreInput').value)}`;
 

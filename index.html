@@ -185,7 +185,7 @@ function empDisplayName(rec){
   return String(v);
 }
 function fetchEmployees(){
-  page:1, pageSize:200 })
+  return ZOHO.CREATOR.API.getAllRecords({ appName: APP_NAME, reportName: REPORTS.employees, page:1, pageSize:200 })
     .then(resp => {
       const data = (resp && resp.data) ? resp.data : [];
       state.employees = data.map(r => ({ ID:r.ID, name:empDisplayName(r), department:r.Department||'' }));

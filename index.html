@@ -184,34 +184,147 @@ function empDisplayName(rec){
   if(typeof v === 'object') return [v.prefix,v.first_name,v.last_name,v.suffix].filter(Boolean).join(' ').trim() || rec.ID;
   return String(v);
 }
-function fetchEmployees(){
-  return ZOHO.CREATOR.API.getAllRecords({ appName: APP_NAME, reportName: REPORTS.employees, page:1, pageSize:200 })
-    .then(resp => {
-      const data = (resp && resp.data) ? resp.data : [];
-      state.employees = data.map(r => ({ ID:r.ID, name:empDisplayName(r), department:r.Department||'' }));
-      return ZOHO.CREATOR.API.getAllRecords({ appName: APP_NAME, reportName: REPORTS.review, page:1, pageSize:200 });
-    })
-    .then(resp => {
-      const reviews = (resp && resp.data) ? resp.data : [];
-      const seenIds = new Set();
-      const withReviews = [];
-      reviews.forEach(r => {
-        const empId = r.Employee_Lookup ? (r.Employee_Lookup.ID || r.Employee_Lookup) : '';
-        if(empId && !seenIds.has(empId)){
-          seenIds.add(empId);
-          const emp = state.employees.find(e => e.ID === empId);
-          if(emp) withReviews.push(emp);
+//replce data
+function fetchEmployees()
+{
+    console.log("STEP 1: Starting fetchEmployees");
+
+    var employeeConfig = {
+        appName: APP_NAME,
+        reportName: REPORTS.employees,
+        page: 1,
+        pageSize: 200
+    };
+
+    console.log("Employee config:", employeeConfig);
+
+    return ZOHO.CREATOR.API.getAllRecords(employeeConfig)
+    .then(function(resp)
+    {
+        console.log("Employee API Response:", resp);
+
+        var data = [];
+
+        if(resp && resp.data)
+        {
+            data = resp.data;
         }
-      });
-      document.getElementById('empSelect').innerHTML = '<option value="">— Select —</option>' +
-        withReviews.map(e => `<option value="${e.ID}">${escapeHtml(e.name)}</option>`).join('');
-    }).catch(err => { console.error('fetchEmployees error', err); });
+
+        state.employees = data.map(function(r)
+        {
+            return {
+                ID: r.ID,
+                name: empDisplayName(r),
+                department: r.Department || ""
+            };
+        });
+
+        console.log("All Employees:", state.employees);
+
+        var reviewConfig = {
+            appName: APP_NAME,
+            reportName: REPORTS.review,
+            page: 1,
+            pageSize: 200
+        };
+
+        console.log("STEP 2: Loading Review Report");
+        console.log("Review config:", reviewConfig);
+
+        return ZOHO.CREATOR.API.getAllRecords(reviewConfig);
+    })
+    .then(function(resp)
+    {
+        console.log("Review API Response:", resp);
+
+        var reviews = [];
+
+        if(resp && resp.data)
+        {
+            reviews = resp.data;
+        }
+
+        var seenIds = {};
+        var withReviews = [];
+
+        reviews.forEach(function(r)
+        {
+            var empId = "";
+
+            if(r.Employee_Lookup)
+            {
+                if(typeof r.Employee_Lookup === "object")
+                {
+                    if(r.Employee_Lookup.ID)
+                    {
+                        empId = r.Employee_Lookup.ID;
+                    }
+                }
+                else
+                {
+                    empId = r.Employee_Lookup;
+                }
+            }
+
+            if(empId)
+            {
+                empId = empId.toString();
+            }
+
+            if(empId !== "" && !seenIds[empId])
+            {
+                seenIds[empId] = true;
+
+                var emp = state.employees.find(function(e)
+                {
+                    return e.ID.toString() === empId;
+                });
+
+                if(emp)
+                {
+                    withReviews.push(emp);
+                }
+            }
+        });
+
+        console.log("Employees With Review:", withReviews);
+
+        var options = '<option value="">— Select —</option>';
+
+        withReviews.forEach(function(e)
+        {
+            options +=
+                '<option value="' +
+                escapeHtml(e.ID) +
+                '">' +
+                escapeHtml(e.name) +
+                '</option>';
+        });
+
+        document.getElementById("empSelect").innerHTML = options;
+
+        console.log("STEP 3: Employee dropdown populated");
+
+        return withReviews;
+    })
+    .catch(function(err)
+    {
+        console.error("fetchEmployees ERROR:", err);
+
+        document.getElementById("empSelect").innerHTML =
+            '<option value="">Failed to load employees</option>';
+
+        setStatus(
+            "Employee loading failed — check console.",
+            false
+        );
+
+        throw err;
+    });
 }
 
-function creatorUpdateRecord(reportName, id, data){
-  return ZOHO.CREATOR.API.updateRecord({ appName: APP_NAME, reportName: reportName, id: id, data: { "data": data } })
-    .then(resp => { if(resp && resp.code === 3000){ return resp.data; } throw resp; });
-}
+
+  
 
 function loadAppraisal(){
   const empId = document.getElementById('empSelect').value;
@@ -313,15 +426,43 @@ function collectCompUpdates(){
   return Array.from(document.querySelectorAll('.comp-appr-input')).map(inp =>
     creatorUpdateRecord(REPORTS.competency, inp.getAttribute('data-comp-id'), { Appraiser_Rating: inp.value }));
 }
-function collectReviewUpdate(extra){
-  return {
-    Appraiser_Comments: document.getElementById('apprCommentsInput').value,
-    Overall_Rating: document.getElementById('overallRatingInput').value,
-    KRA_Score: parseFloat(document.getElementById('kraScoreInput').value) || 0,
-    Competency_Score: parseFloat(document.getElementById('compScoreInput').value) || 0,
-    Final_Score: parseFloat(document.getElementById('finalScoreInput').value) || 0,
-    ...extra
-  };
+
+  
+  
+ function collectReviewUpdate(extra)
+{
+    var data = {
+        Appraiser_Comments:
+            document.getElementById("apprCommentsInput").value,
+
+        Overall_Rating:
+            document.getElementById("overallRatingInput").value,
+
+        KRA_Score:
+            parseFloat(
+                document.getElementById("kraScoreInput").value
+            ) || 0,
+
+        Competency_Score:
+            parseFloat(
+                document.getElementById("compScoreInput").value
+            ) || 0,
+
+        Final_Score:
+            parseFloat(
+                document.getElementById("finalScoreInput").value
+            ) || 0
+    };
+
+    if(extra)
+    {
+        Object.keys(extra).forEach(function(key)
+        {
+            data[key] = extra[key];
+        });
+    }
+
+    return data;
 }
 
 function saveDraft(){
@@ -385,14 +526,66 @@ function exportPDF(){
 }
 
 /* ============ INIT ============ */
-if(window.ZOHO && ZOHO.CREATOR){
-  ZOHO.CREATOR.init().then(async function(){
-    setStatus('Connected — loading employees…', true);
-    await fetchEmployees();
-    setStatus('Ready.', true);
-  }).catch(function(err){ console.error('Widget init failed', err); setStatus('Widget not initialized — open inside Creator.', false); });
-} else {
-  setStatus('Zoho Creator SDK not detected — running standalone.', false);
+/* =====================================================
+   ZOHO CREATOR WIDGET INITIALIZATION
+===================================================== */
+
+console.log("WIDGET VERSION: 2026-08-11-02");
+
+if(window.ZOHO && ZOHO.CREATOR)
+{
+    console.log("ZOHO Creator SDK detected");
+
+    ZOHO.CREATOR.init()
+    .then(function()
+    {
+        console.log("ZOHO Creator SDK initialized successfully");
+
+        setStatus(
+            "Connected — loading employees...",
+            true
+        );
+
+        return fetchEmployees();
+    })
+    .then(function()
+    {
+        console.log("Widget initialization completed");
+
+        setStatus(
+            "Ready.",
+            true
+        );
+    })
+    .catch(function(err)
+    {
+        console.error(
+            "Widget initialization ERROR:",
+            err
+        );
+
+        document.getElementById("empSelect").innerHTML =
+            '<option value="">Unable to load</option>';
+
+        setStatus(
+            "Widget initialization failed — check console.",
+            false
+        );
+    });
+}
+else
+{
+    console.error(
+        "ZOHO Creator SDK NOT detected"
+    );
+
+    document.getElementById("empSelect").innerHTML =
+        '<option value="">SDK not detected</option>';
+
+    setStatus(
+        "Zoho Creator SDK not detected — open inside Creator.",
+        false
+    );
 }
 </script>
 </body>

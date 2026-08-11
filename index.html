@@ -130,7 +130,7 @@ var state = {
   competencies: []
 };
 
-console.log("WIDGET VERSION: 2026-08-11-FINAL-01");
+console.log("WIDGET VERSION: 2026-08-11-DEPTHEAD-FIX-02");
 
 function setStatus(msg, ok) {
   var el = document.getElementById("statusMsg");
@@ -516,34 +516,218 @@ function renderCompetencies() {
    UPDATE HELPERS
 ===================================================== */
 
-function creatorUpdateRecord(reportName, recordId, data) {
-  if (!recordId) { return Promise.reject(new Error("Missing record ID for " + reportName)); }
+function creatorNumericString(value, decimalPlaces) {
+  if (value === null || value === undefined || value === "") { return "0"; }
 
-  return ZOHO.CREATOR.API.updateRecord({
+  var raw = value;
+  if (typeof raw === "string") {
+    raw = raw.trim().replace(/,/g, "").replace(/%/g, "");
+    if (raw === "") { return "0"; }
+  }
+
+  var n = Number(raw);
+  if (!isFinite(n)) { return "0"; }
+
+  var places = (typeof decimalPlaces === "number") ? Math.max(0, decimalPlaces) : 2;
+  var factor = Math.pow(10, places);
+  var rounded = Math.round((n + Number.EPSILON) * factor) / factor;
+
+  return String(rounded);
+}
+
+function getZohoErrorText(error) {
+  var text = "";
+
+  try {
+    if (error && error.responseText) { text += " " + error.responseText; }
+    if (error && error.message) { text += " " + error.message; }
+    if (error && error.description) { text += " " + error.description; }
+    if (error && error.code !== undefined) { text += " " + error.code; }
+  } catch (e) {}
+
+  return text;
+}
+
+function isExtraKeyJsonError(error) {
+  var text = getZohoErrorText(error);
+  return (
+    text.indexOf("2945") !== -1 ||
+    text.indexOf("EXTRA_KEY_FOUND_IN_JSON") !== -1
+  );
+}
+
+/* =====================================================
+   UPDATE CREATOR RECORD
+
+   JS API v1 uses:
+   config.data = formData
+
+   The REST body expected by Creator is:
+   {
+     "data": {
+       "Field_Link_Name": "value"
+     }
+   }
+
+   Therefore formData below is wrapped once as {data: fields}.
+===================================================== */
+function creatorUpdateRecord(reportName, recordId, fields) {
+  if (!recordId) {
+    return Promise.reject(
+      new Error("Missing record ID for report: " + reportName)
+    );
+  }
+
+  var requestBody = {
+    data: fields
+  };
+
+  var config = {
     reportName: reportName,
     id: String(recordId),
-    data: data
-  }).then(function(resp) {
-    if (resp && resp.code == 3000) { return resp.data; }
-    throw resp;
+    data: requestBody
+  };
+
+  console.log("UPDATE REQUEST:", {
+    reportName: reportName,
+    id: String(recordId),
+    data: requestBody
   });
+
+  return ZOHO.CREATOR.API.updateRecord(config)
+    .then(function(response) {
+      console.log("UPDATE RESPONSE:", reportName, recordId, response);
+
+      if (response && (response.code == 3000 || response.code == "3000")) {
+        return response.data;
+      }
+
+      throw response;
+    })
+    .catch(function(error) {
+      console.error("UPDATE API ERROR:", reportName, recordId, error);
+
+      if (error && error.responseText) {
+        console.error("ZOHO RESPONSE TEXT:", error.responseText);
+      }
+
+      /*
+        Compatibility fallback:
+        Some older widget builds have behaved as if config.data
+        should contain the field map directly.
+
+        We only retry that alternate shape when Zoho explicitly
+        reports 2945 / EXTRA_KEY_FOUND_IN_JSON.
+      */
+      if (isExtraKeyJsonError(error)) {
+        var fallbackConfig = {
+          reportName: reportName,
+          id: String(recordId),
+          data: fields
+        };
+
+        console.warn(
+          "Retrying update with alternate V1 payload shape:",
+          fallbackConfig
+        );
+
+        return ZOHO.CREATOR.API.updateRecord(fallbackConfig)
+          .then(function(response2) {
+            console.log(
+              "UPDATE FALLBACK RESPONSE:",
+              reportName,
+              recordId,
+              response2
+            );
+
+            if (
+              response2 &&
+              (response2.code == 3000 || response2.code == "3000")
+            ) {
+              return response2.data;
+            }
+
+            throw response2;
+          });
+      }
+
+      throw error;
+    });
+}
+
+function ratingValueOrNull(value) {
+  if (value === null || value === undefined) { return null; }
+
+  var text = String(value).trim();
+  if (text === "") { return null; }
+
+  var number = Number(text);
+  if (!isFinite(number)) { return null; }
+  if (number < 1 || number > 5) { return null; }
+
+  return String(number);
+}
+
+function validateAllAppraiserRatings() {
+  var goalInputs = document.querySelectorAll(".goal-appr-input");
+  var compInputs = document.querySelectorAll(".comp-appr-input");
+
+  for (var i = 0; i < goalInputs.length; i++) {
+    if (ratingValueOrNull(goalInputs[i].value) === null) {
+      return "Enter an Appraiser Rating from 1 to 5 for every Goal before approving.";
+    }
+  }
+
+  for (var j = 0; j < compInputs.length; j++) {
+    if (ratingValueOrNull(compInputs[j].value) === null) {
+      return "Enter an Appraiser Rating from 1 to 5 for every Competency before approving.";
+    }
+  }
+
+  return "";
 }
 
 function collectGoalUpdates() {
   var inputs = document.querySelectorAll(".goal-appr-input");
   var promises = [];
+
   for (var i = 0; i < inputs.length; i++) {
-    promises.push(creatorUpdateRecord(REPORTS.goal, inputs[i].getAttribute("data-goal-id"), {Appraiser_Rating: inputs[i].value}));
+    var rating = ratingValueOrNull(inputs[i].value);
+
+    // Drafts may contain unrated goals. Do not send an empty numeric value.
+    if (rating === null) { continue; }
+
+    promises.push(
+      creatorUpdateRecord(
+        REPORTS.goal,
+        inputs[i].getAttribute("data-goal-id"),
+        { Appraiser_Rating: rating }
+      )
+    );
   }
+
   return promises;
 }
 
 function collectCompUpdates() {
   var inputs = document.querySelectorAll(".comp-appr-input");
   var promises = [];
+
   for (var i = 0; i < inputs.length; i++) {
-    promises.push(creatorUpdateRecord(REPORTS.competency, inputs[i].getAttribute("data-comp-id"), {Appraiser_Rating: inputs[i].value}));
+    var rating = ratingValueOrNull(inputs[i].value);
+
+    // Drafts may contain unrated competencies. Do not send an empty numeric value.
+    if (rating === null) { continue; }
+
+    promises.push(
+      creatorUpdateRecord(
+        REPORTS.competency,
+        inputs[i].getAttribute("data-comp-id"),
+        { Appraiser_Rating: rating }
+      )
+    );
   }
+
   return promises;
 }
 
@@ -551,9 +735,9 @@ function collectReviewUpdate(extra) {
   var data = {
     Appraiser_Comments: document.getElementById("apprCommentsInput").value,
     Overall_Rating: document.getElementById("overallRatingInput").value,
-    KRA_Score: parseFloat(document.getElementById("kraScoreInput").value) || 0,
-    Competency_Score: parseFloat(document.getElementById("compScoreInput").value) || 0,
-    Final_Score: parseFloat(document.getElementById("finalScoreInput").value) || 0
+    KRA_Score: creatorNumericString(document.getElementById("kraScoreInput").value, 2),
+    Competency_Score: creatorNumericString(document.getElementById("compScoreInput").value, 2),
+    Final_Score: creatorNumericString(document.getElementById("finalScoreInput").value, 2)
   };
 
   if (extra) {
@@ -590,14 +774,42 @@ function saveDraft() {
 }
 
 function approveAppraisal() {
-  if (!state.review || !state.review.ID) { setStatus("Load an appraisal first.", false); return; }
+  if (!state.review || !state.review.ID) {
+    setStatus("Load an appraisal first.", false);
+    return;
+  }
+
+  var ratingError = validateAllAppraiserRatings();
+  if (ratingError) {
+    setStatus(ratingError, false);
+    return;
+  }
+
   setStatus("Approving...", null);
 
   var updates = collectGoalUpdates().concat(collectCompUpdates());
+
   Promise.all(updates)
-    .then(function() { return creatorUpdateRecord(REPORTS.review, state.review.ID, collectReviewUpdate({Status:"Approved"})); })
-    .then(function() { setStatus("Appraisal approved and locked.", true); return reloadCurrentAppraisal(); })
-    .catch(function(err) { console.error("APPROVE ERROR:", err); setStatus("Approval failed — check console.", false); });
+    .then(function() {
+      return creatorUpdateRecord(
+        REPORTS.review,
+        state.review.ID,
+        collectReviewUpdate({ Status: "Approved" })
+      );
+    })
+    .then(function() {
+      setStatus("Appraisal approved and locked.", true);
+      return reloadCurrentAppraisal();
+    })
+    .catch(function(err) {
+      console.error("APPROVE ERROR:", err);
+
+      if (err && err.responseText) {
+        console.error("APPROVE RESPONSE TEXT:", err.responseText);
+      }
+
+      setStatus("Approval failed — check console.", false);
+    });
 }
 
 function rejectAppraisal() {

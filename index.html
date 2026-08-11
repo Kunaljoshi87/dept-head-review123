@@ -110,6 +110,7 @@ table{width:100%;border-collapse:collapse;margin-top:8px}th{text-align:left;font
 </div>
 
 <script>
+console.log("DEPARTMENT HEAD REVIEW VERSION: 2026-08-11-LONG-TASK-01");
 /* =====================================================
    VERIFIED ZOHO CREATOR WIDGET - JS API V1
    Same application: appName intentionally omitted.
@@ -264,6 +265,10 @@ function buildEmployeeDropdown() {
 
   for (var i = 0; i < state.reviews.length; i++) {
     var review = state.reviews[i];
+
+    // Department Head should only see appraisals after employee Self Rating submission.
+    if (textValue(review.Status) !== "Submitted for Approval") { continue; }
+
     var id = lookupId(review.Employee_Lookup);
     if (!id) { continue; }
 
@@ -317,7 +322,8 @@ function findReview(empId, quarter, year) {
     if (
       lookupId(r.Employee_Lookup) === String(empId) &&
       sameValue(r.Quarter, quarter) &&
-      sameValue(r.Year_field, year)
+      sameValue(r.Year_field, year) &&
+      textValue(r.Status) === "Submitted for Approval"
     ) {
       matches.push(r);
     }
@@ -446,7 +452,7 @@ function renderResult() {
   document.getElementById("rejectCommentsInput").value = textValue(r.Rejection_Comments);
   document.getElementById("rejectBox").style.display = "none";
 
-  var locked = textValue(r.Status) === "Approved";
+  var locked = textValue(r.Status) !== "Submitted for Approval";
   document.getElementById("saveDraftBtn").disabled = locked;
   document.getElementById("rejectBtn").disabled = locked;
   document.getElementById("approveBtn").disabled = locked;
@@ -478,9 +484,9 @@ function renderKras() {
 
     for (var g = 0; g < goals.length; g++) {
       var goal = goals[g];
-      var disabled = (state.review && textValue(state.review.Status) === "Approved") ? " disabled" : "";
+      var disabled = (state.review && textValue(state.review.Status) !== "Submitted for Approval") ? " disabled" : "";
       html += '<tr>';
-      html += '<td>' + escapeHtml(textValue(goal.Goal_Name)) + '</td>';
+      html += '<td>' + escapeHtml(textValue(goal.Description) || textValue(goal.Goal_Name)) + '</td>';
       html += '<td>' + escapeHtml(textValue(goal.Achievement) || "—") + '</td>';
       html += '<td>' + escapeHtml(textValue(goal.Self_Rating) || "—") + '</td>';
       html += '<td><input type="number" min="1" max="5" value="' + escapeHtml(textValue(goal.Appraiser_Rating)) + '" data-goal-id="' + escapeHtml(goal.ID) + '" class="goal-appr-input"' + disabled + '></td>';
@@ -502,7 +508,7 @@ function renderCompetencies() {
   var html = "";
   for (var i = 0; i < state.competencies.length; i++) {
     var comp = state.competencies[i];
-    var disabled = (state.review && textValue(state.review.Status) === "Approved") ? " disabled" : "";
+    var disabled = (state.review && textValue(state.review.Status) !== "Submitted for Approval") ? " disabled" : "";
     html += '<tr>';
     html += '<td>' + escapeHtml(textValue(comp.Attribute_Name)) + '</td>';
     html += '<td>' + escapeHtml(textValue(comp.Rating) || "—") + '</td>';
@@ -794,11 +800,11 @@ function approveAppraisal() {
       return creatorUpdateRecord(
         REPORTS.review,
         state.review.ID,
-        collectReviewUpdate({ Status: "Approved" })
+        collectReviewUpdate({ Status: "Head Approved" })
       );
     })
     .then(function() {
-      setStatus("Appraisal approved and locked.", true);
+      setStatus("Department Head approved. Sent to HR for final approval.", true);
       return reloadCurrentAppraisal();
     })
     .catch(function(err) {
@@ -866,7 +872,7 @@ function exportPDF() {
     targetHtml += '<table class="pf-table"><thead><tr><th>Task / Achievement</th><th style="width:70px">Self</th><th style="width:90px">Appraiser</th></tr></thead><tbody>';
     for (var g = 0; g < pair.goals.length; g++) {
       var goal = pair.goals[g];
-      targetHtml += '<tr><td>' + escapeHtml(textValue(goal.Goal_Name)) + ' — ' + escapeHtml(textValue(goal.Achievement)) + '</td><td>' + escapeHtml(textValue(goal.Self_Rating)) + '</td><td>' + escapeHtml(textValue(goal.Appraiser_Rating)) + '</td></tr>';
+      targetHtml += '<tr><td>' + escapeHtml(textValue(goal.Description) || textValue(goal.Goal_Name)) + ' — ' + escapeHtml(textValue(goal.Achievement)) + '</td><td>' + escapeHtml(textValue(goal.Self_Rating)) + '</td><td>' + escapeHtml(textValue(goal.Appraiser_Rating)) + '</td></tr>';
     }
     targetHtml += '</tbody></table>';
   }
@@ -901,7 +907,7 @@ if (window.ZOHO && ZOHO.CREATOR) {
       return fetchEmployees();
     })
     .then(function() {
-      console.log("WIDGET INITIALIZATION COMPLETE");
+      console.log("WIDGET INITIALIZATION COMPLETE - SELF RATING FLOW");
     })
     .catch(function(err) {
       console.error("WIDGET INITIALIZATION ERROR:", err);

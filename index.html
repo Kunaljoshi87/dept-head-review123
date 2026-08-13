@@ -128,8 +128,56 @@ function setBusy(id,busy,text){const b=document.getElementById(id);if(!b)return;
 
 function getAll(reportName){let page=1,out=[];function next(){return ZOHO.CREATOR.API.getAllRecords({reportName,page,pageSize:200}).then(r=>{const rows=r&&r.data?r.data:[];out=out.concat(rows);if(rows.length<200||page>=50)return out;page++;return next()}).catch(err=>{if(noData(err))return out;throw err})}return next()}
 function updateRecord(reportName,id,fields){const wrapped={reportName,id:String(id),data:{data:fields}};return ZOHO.CREATOR.API.updateRecord(wrapped).then(r=>{if(r&&r.code==3000)return r.data;throw r}).catch(err=>{const t=errorText(err);if(t.indexOf('2945')>=0||t.indexOf('EXTRA_KEY_FOUND_IN_JSON')>=0){return ZOHO.CREATOR.API.updateRecord({reportName,id:String(id),data:fields}).then(r=>{if(r&&r.code==3000)return r.data;throw r})}throw err})}
-function getStage(review){const s=textValue(review&&review.Process_Stage).trim();if(s)return s;const status=textValue(review&&review.Status);if(status==='Head Approved')return STAGE.HEAD_APPROVED;if(status==='Approved')return STAGE.APPROVED;if(status==='Rejected')return STAGE.REJECTED;if(status==='Submitted for Approval')return STAGE.SELF_SUBMITTED;return STAGE.KRA_SUBMITTED}
-function employeeFieldMatches(field,empId,empName){const id=lookupId(field);if(id&&String(id)===String(empId))return true;return textValue(field).trim()===String(empName||'').trim()}
+function getStage(review)
+{
+    if(!review)
+    {
+        return "";
+    }
+
+    var stage =
+        textValue(
+            review.Process_Stage
+        ).trim();
+
+    /*
+       Process_Stage is the ONLY workflow source.
+       Never assume Self Rating from Status.
+    */
+    if(stage === STAGE.KRA_SUBMITTED)
+    {
+        return STAGE.KRA_SUBMITTED;
+    }
+
+    if(stage === STAGE.SELF_SUBMITTED)
+    {
+        return STAGE.SELF_SUBMITTED;
+    }
+
+    if(stage === STAGE.HEAD_APPROVED)
+    {
+        return STAGE.HEAD_APPROVED;
+    }
+
+    if(stage === STAGE.APPROVED)
+    {
+        return STAGE.APPROVED;
+    }
+
+    if(stage === STAGE.REJECTED)
+    {
+        return STAGE.REJECTED;
+    }
+
+    /*
+       Old records / missing Process_Stage:
+       DO NOT send them to Department Head.
+    */
+    return "";
+}
+
+  
+  function employeeFieldMatches(field,empId,empName){const id=lookupId(field);if(id&&String(id)===String(empId))return true;return textValue(field).trim()===String(empName||'').trim()}
 function fullGoalText(goal){return textValue(goal&&goal.Description)||textValue(goal&&goal.Goal_Name)}
 
 async function loadInitial(){state.reviews=await getAll(REPORTS.review);const seen={},emps=[];state.reviews.forEach(r=>{if(getStage(r)!==STAGE.SELF_SUBMITTED)return;const id=lookupId(r.Employee_Lookup);if(!id||seen[id])return;seen[id]=true;emps.push({ID:id,name:textValue(r.Employee_Lookup)||id,department:textValue(r.Department)})});state.employees=emps;document.getElementById('empSelect').innerHTML='<option value="">-- Select --</option>'+emps.map(e=>'<option value="'+esc(e.ID)+'">'+esc(e.name)+'</option>').join('');setStatus(emps.length?'Ready.':'No Self Rating submissions waiting for review.',!!emps.length)}

@@ -1,164 +1,4817 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Department Head Review - Mega Engineering</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>
+Department Head Review - Mega Engineering
+</title>
+
+<link rel="preconnect"
+      href="https://fonts.googleapis.com">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet">
+
 <script src="https://static.zohocdn.com/creator/widgets/version/1.0/widgetsdk-min.js"></script>
+
+
 <style>
-:root{--bg:#F4F6F8;--panel:#FFF;--line:#D7DEE5;--navy:#1E4E8C;--red:#C0392B;--green:#1E8E5A;--amber:#B7791F;--text:#1F2937;--muted:#6B7A8F}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,sans-serif}body{padding:24px 28px 90px;min-height:100vh}input,textarea,select{background:#F9FAFB;border:1px solid var(--line);color:var(--text);font-family:Inter,sans-serif;font-size:13px;padding:8px 10px;width:100%;outline:none}input:disabled,textarea:disabled,select:disabled{background:#EEF1F4;color:var(--muted)}textarea{resize:vertical;min-height:70px}label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:4px}button{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;text-transform:uppercase;background:transparent;border:1px solid var(--navy);color:var(--navy);padding:9px 16px;cursor:pointer}button:hover{background:var(--navy);color:#fff}button.solid{background:var(--navy);color:#fff}button.danger{border-color:var(--red);color:var(--red)}button.danger:hover{background:var(--red);color:#fff}button.green{border-color:var(--green);color:var(--green)}button.green:hover{background:var(--green);color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
-.section{border:1px solid var(--line);background:var(--panel);padding:20px 22px;margin-bottom:18px;box-shadow:0 1px 3px rgba(31,41,55,.05)}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px;font-family:'Space Grotesk',sans-serif;font-size:17px;color:var(--navy);font-weight:600}.top-grid{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:14px;align-items:end}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.readonly{background:#EEF1F4;padding:8px 10px;font-size:13px;border:1px solid var(--line);min-height:36px}.badge{font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--line);padding:4px 8px}.badge.ok{color:var(--green);border-color:var(--green)}.badge.bad{color:var(--red);border-color:var(--red)}.badge.warn{color:var(--amber);border-color:var(--amber)}
-.kra-card{border:1px dashed var(--line);padding:14px;margin-bottom:14px}.goal-head{font-weight:600;margin-bottom:6px}.goal-grid{display:grid;grid-template-columns:2fr 1.2fr .7fr .8fr .9fr;gap:10px;align-items:start;border-top:1px solid var(--line);padding-top:12px;margin-top:12px}.attr-grid{display:grid;grid-template-columns:2fr .8fr .8fr .9fr;gap:10px;align-items:end;margin-bottom:10px}
-.summary-table{width:100%;border-collapse:collapse}.summary-table th,.summary-table td{padding:9px;border-bottom:1px solid var(--line);text-align:right}.summary-table th:first-child,.summary-table td:first-child{text-align:left}.summary-table thead th{font-size:10px;text-transform:uppercase;color:var(--muted)}.summary-table .final-row td{font-weight:700;font-size:15px;color:var(--navy)}
-.footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:12px 28px;display:flex;justify-content:flex-end;gap:10px;z-index:20}.status{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-right:auto;align-self:center}.status.ok{color:var(--green)}.status.bad{color:var(--red)}.hidden{display:none!important}.reject-box{margin-top:14px}
-.modal-backdrop{position:fixed;inset:0;background:rgba(31,41,55,.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}.modal{width:min(520px,100%);background:#fff;border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.2)}.modal-head{padding:16px 18px;border-bottom:1px solid var(--line);font-family:'Space Grotesk',sans-serif;font-size:17px;color:var(--navy);font-weight:600}.modal-body{padding:18px;font-size:13px;line-height:1.55;white-space:pre-wrap}.modal-actions{padding:0 18px 18px;text-align:right}.modal.error .modal-head{color:var(--red)}.modal.success .modal-head{color:var(--green)}
-@media(max-width:900px){body{padding:15px 15px 100px}.top-grid,.two-col,.goal-grid,.attr-grid{grid-template-columns:1fr}.footer{padding:10px 15px;flex-wrap:wrap}}
+
+:root
+{
+    --bg:#F4F6F8;
+    --panel:#FFF;
+    --line:#D7DEE5;
+    --navy:#1E4E8C;
+    --red:#C0392B;
+    --green:#1E8E5A;
+    --amber:#B7791F;
+    --text:#1F2937;
+    --muted:#6B7A8F;
+}
+
+*
+{
+    box-sizing:border-box;
+}
+
+html,
+body
+{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:Inter,sans-serif;
+}
+
+body
+{
+    padding:24px 28px 90px;
+    min-height:100vh;
+}
+
+input,
+textarea,
+select
+{
+    background:#F9FAFB;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:Inter,sans-serif;
+    font-size:13px;
+    padding:8px 10px;
+    width:100%;
+    outline:none;
+}
+
+input:focus,
+textarea:focus,
+select:focus
+{
+    border-color:var(--navy);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled
+{
+    background:#EEF1F4;
+    color:var(--muted);
+}
+
+textarea
+{
+    resize:vertical;
+    min-height:70px;
+}
+
+label
+{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    display:block;
+    margin-bottom:4px;
+}
+
+button
+{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    background:transparent;
+    border:1px solid var(--navy);
+    color:var(--navy);
+    padding:9px 16px;
+    cursor:pointer;
+}
+
+button:hover
+{
+    background:var(--navy);
+    color:#fff;
+}
+
+button.solid
+{
+    background:var(--navy);
+    color:#fff;
+}
+
+button.danger
+{
+    border-color:var(--red);
+    color:var(--red);
+}
+
+button.danger:hover
+{
+    background:var(--red);
+    color:#fff;
+}
+
+button.green
+{
+    border-color:var(--green);
+    color:var(--green);
+}
+
+button.green:hover
+{
+    background:var(--green);
+    color:#fff;
+}
+
+button:disabled
+{
+    opacity:.45;
+    cursor:not-allowed;
+}
+
+.section
+{
+    border:1px solid var(--line);
+    background:var(--panel);
+    padding:20px 22px;
+    margin-bottom:18px;
+    box-shadow:0 1px 3px rgba(31,41,55,.05);
+}
+
+.section-head
+{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:10px;
+    margin-bottom:14px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:17px;
+    color:var(--navy);
+    font-weight:600;
+}
+
+.top-grid
+{
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr auto;
+    gap:14px;
+    align-items:end;
+}
+
+.grid
+{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px;
+}
+
+.two-col
+{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.readonly
+{
+    background:#EEF1F4;
+    padding:8px 10px;
+    font-size:13px;
+    border:1px solid var(--line);
+    min-height:36px;
+}
+
+.badge
+{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    border:1px solid var(--line);
+    padding:4px 8px;
+}
+
+.badge.ok
+{
+    color:var(--green);
+    border-color:var(--green);
+}
+
+.badge.bad
+{
+    color:var(--red);
+    border-color:var(--red);
+}
+
+.badge.warn
+{
+    color:var(--amber);
+    border-color:var(--amber);
+}
+
+.kra-card
+{
+    border:1px dashed var(--line);
+    padding:14px;
+    margin-bottom:14px;
+}
+
+.goal-head
+{
+    font-weight:600;
+    margin-bottom:6px;
+}
+
+.goal-grid
+{
+    display:grid;
+    grid-template-columns:2fr 1.2fr .7fr .8fr .9fr;
+    gap:10px;
+    align-items:start;
+    border-top:1px solid var(--line);
+    padding-top:12px;
+    margin-top:12px;
+}
+
+.attr-grid
+{
+    display:grid;
+    grid-template-columns:2fr .8fr .8fr .9fr;
+    gap:10px;
+    align-items:end;
+    margin-bottom:10px;
+}
+
+.summary-table
+{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.summary-table th,
+.summary-table td
+{
+    padding:9px;
+    border-bottom:1px solid var(--line);
+    text-align:right;
+}
+
+.summary-table th:first-child,
+.summary-table td:first-child
+{
+    text-align:left;
+}
+
+.summary-table thead th
+{
+    font-size:10px;
+    text-transform:uppercase;
+    color:var(--muted);
+}
+
+.summary-table .final-row td
+{
+    font-weight:700;
+    font-size:15px;
+    color:var(--navy);
+}
+
+.footer
+{
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#fff;
+    border-top:1px solid var(--line);
+    padding:12px 28px;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    z-index:20;
+}
+
+.status
+{
+    font-size:11px;
+    color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;
+    margin-right:auto;
+    align-self:center;
+}
+
+.status.ok
+{
+    color:var(--green);
+}
+
+.status.bad
+{
+    color:var(--red);
+}
+
+.hidden
+{
+    display:none !important;
+}
+
+.reject-box
+{
+    margin-top:14px;
+}
+
+
+/* =====================================================
+   POPUP
+===================================================== */
+
+.modal-backdrop
+{
+    position:fixed;
+    inset:0;
+    background:rgba(31,41,55,.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+    padding:20px;
+}
+
+.modal
+{
+    width:min(520px,100%);
+    background:#fff;
+    border:1px solid var(--line);
+    box-shadow:0 20px 50px rgba(0,0,0,.2);
+}
+
+.modal-head
+{
+    padding:16px 18px;
+    border-bottom:1px solid var(--line);
+    font-family:'Space Grotesk',sans-serif;
+    font-size:17px;
+    color:var(--navy);
+    font-weight:600;
+}
+
+.modal-body
+{
+    padding:18px;
+    font-size:13px;
+    line-height:1.55;
+    white-space:pre-wrap;
+}
+
+.modal-actions
+{
+    padding:0 18px 18px;
+    text-align:right;
+}
+
+.modal.error .modal-head
+{
+    color:var(--red);
+}
+
+.modal.success .modal-head
+{
+    color:var(--green);
+}
+
+
+@media(max-width:900px)
+{
+    body
+    {
+        padding:15px 15px 100px;
+    }
+
+    .top-grid,
+    .two-col,
+    .goal-grid,
+    .attr-grid
+    {
+        grid-template-columns:1fr;
+    }
+
+    .footer
+    {
+        padding:10px 15px;
+        flex-wrap:wrap;
+    }
+}
+
 </style>
+
 </head>
+
+
 <body>
 
+
+<!-- =====================================================
+     TOP FILTER
+===================================================== -->
+
 <div class="section">
-  <div class="section-head"><span>Department Head Review</span><span class="badge warn">Self Rating Submitted</span></div>
-  <div class="top-grid">
-    <div><label>Employee</label><select id="empSelect"><option value="">Loading...</option></select></div>
-    <div><label>Quarter</label><select id="quarterSelect"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option></select></div>
-    <div><label>Year</label><select id="yearSelect"><option>2024</option><option>2025</option><option selected>2026</option><option>2027</option><option>2028</option></select></div>
-    <div><button class="solid" onclick="loadAppraisal()">Load Appraisal</button></div>
-  </div>
+
+    <div class="section-head">
+
+        <span>
+            Department Head Review
+        </span>
+
+        <span class="badge warn">
+            Self Rating Submitted
+        </span>
+
+    </div>
+
+
+    <div class="top-grid">
+
+
+        <div>
+
+            <label>
+                Employee
+            </label>
+
+            <select id="empSelect">
+
+                <option value="">
+                    Loading...
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Quarter
+            </label>
+
+            <select id="quarterSelect">
+
+                <option>Q1</option>
+                <option>Q2</option>
+                <option>Q3</option>
+                <option>Q4</option>
+
+            </select>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Year
+            </label>
+
+            <select id="yearSelect">
+
+                <option>2024</option>
+                <option>2025</option>
+                <option selected>2026</option>
+                <option>2027</option>
+                <option>2028</option>
+
+            </select>
+
+        </div>
+
+
+        <div>
+
+            <button
+                class="solid"
+                onclick="loadAppraisal()">
+
+                Load Appraisal
+
+            </button>
+
+        </div>
+
+
+    </div>
+
 </div>
 
-<div id="resultArea" class="hidden">
-  <div class="section">
-    <div class="section-head"><span>Employee Details</span><span class="badge" id="statusBadge">-</span></div>
-    <div class="grid">
-      <div><label>Employee</label><div class="readonly" id="rvEmployee">-</div></div>
-      <div><label>Department</label><div class="readonly" id="rvDepartment">-</div></div>
-      <div><label>Quarter / Year</label><div class="readonly" id="rvPeriod">-</div></div>
-    </div>
-  </div>
 
-  <div class="section">
-    <div class="section-head"><span>Performance Settings</span><span class="badge" id="settingsBadge">100%</span></div>
-    <div class="grid">
-      <div><label>KRA Section Weight (%)</label><input id="settingKraWeight" type="number" min="0" max="100" step="0.01" oninput="settingsChanged()"></div>
-      <div><label>Role Attribute Weight (%)</label><input id="settingRoleWeight" type="number" min="0" max="100" step="0.01" oninput="settingsChanged()"></div>
-      <div><label>Total</label><input id="settingTotal" disabled></div>
-    </div>
-    <div style="font-size:12px;color:var(--muted);margin-top:10px">These settings only control how KRA and Role Attribute ratings combine into Overall Rating. They are separate from the final Self-vs-Department-Head calculation.</div>
-  </div>
 
-  <div class="section">
-    <div class="section-head"><span>KRA and Task Review</span><span class="badge">Ratings 0-5</span></div>
+<!-- =====================================================
+     RESULT
+===================================================== -->
+
+<div
+    id="resultArea"
+    class="hidden">
+
+
+<!-- =====================================================
+     EMPLOYEE DETAILS
+===================================================== -->
+
+<div class="section">
+
+    <div class="section-head">
+
+        <span>
+            Employee Details
+        </span>
+
+        <span
+            class="badge"
+            id="statusBadge">
+
+            -
+
+        </span>
+
+    </div>
+
+
+    <div class="grid">
+
+
+        <div>
+
+            <label>
+                Employee
+            </label>
+
+            <div
+                class="readonly"
+                id="rvEmployee">
+
+                -
+
+            </div>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Department
+            </label>
+
+            <div
+                class="readonly"
+                id="rvDepartment">
+
+                -
+
+            </div>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Quarter / Year
+            </label>
+
+            <div
+                class="readonly"
+                id="rvPeriod">
+
+                -
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     PERFORMANCE SETTINGS
+===================================================== -->
+
+<div class="section">
+
+    <div class="section-head">
+
+        <span>
+            Performance Settings
+        </span>
+
+        <span
+            class="badge"
+            id="settingsBadge">
+
+            100%
+
+        </span>
+
+    </div>
+
+
+    <div class="grid">
+
+
+        <div>
+
+            <label>
+                KRA Section Weight (%)
+            </label>
+
+            <input
+                id="settingKraWeight"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                oninput="settingsChanged()">
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Role Attribute Weight (%)
+            </label>
+
+            <input
+                id="settingRoleWeight"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                oninput="settingsChanged()">
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Total
+            </label>
+
+            <input
+                id="settingTotal"
+                disabled>
+
+        </div>
+
+
+    </div>
+
+
+    <div
+        style="
+        font-size:12px;
+        color:var(--muted);
+        margin-top:10px;
+        ">
+
+        KRA Section Weight and Role Attribute Weight
+        control the Overall Rating calculation.
+
+        They must total exactly 100%.
+
+        These settings are separate from the
+        final Self Rating vs Department Head calculation.
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     KRA / TASK
+===================================================== -->
+
+<div class="section">
+
+    <div class="section-head">
+
+        <span>
+            KRA and Task Review
+        </span>
+
+        <span class="badge">
+            Ratings 0-5
+        </span>
+
+    </div>
+
+
     <div id="kraArea"></div>
-  </div>
 
-  <div class="section">
-    <div class="section-head"><span>Role Attribute Review</span><span class="badge">Ratings 0-5</span></div>
-    <div id="attrArea"></div>
-  </div>
-
-  <div class="section">
-    <div class="section-head"><span>Automatic Rating Summary</span><span class="badge">Final = 50% Self + 50% Head</span></div>
-    <table class="summary-table">
-      <thead><tr><th>Rating</th><th>Employee Self</th><th>Department Head</th><th>Final Section</th></tr></thead>
-      <tbody>
-        <tr><td>KRA Rating / 5</td><td id="sumSelfKra">0.00</td><td id="sumHeadKra">0.00</td><td id="sumFinalKra">0.00</td></tr>
-        <tr><td>Role Attribute Rating / 5</td><td id="sumSelfRole">0.00</td><td id="sumHeadRole">0.00</td><td id="sumFinalRole">0.00</td></tr>
-        <tr><td>Overall Rating / 5</td><td id="sumSelfOverall">0.00</td><td id="sumHeadOverall">0.00</td><td>-</td></tr>
-        <tr class="final-row"><td>Final Appraisal Rating / 5</td><td colspan="3" id="sumFinalOverall">0.00</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="section">
-    <div class="section-head"><span>Employee Review Information</span></div>
-    <div class="two-col">
-      <div><label>Facilitating Factors</label><div class="readonly" id="rvFac">-</div></div>
-      <div><label>Constraining Factors</label><div class="readonly" id="rvCon">-</div></div>
-      <div><label>Outstanding Achievement</label><div class="readonly" id="rvOut">-</div></div>
-      <div><label>My Learnings</label><div class="readonly" id="rvLearn">-</div></div>
-    </div>
-    <div style="margin-top:14px"><label>Appraiser Comments</label><textarea id="apprComments"></textarea></div>
-    <div id="rejectBox" class="reject-box hidden"><label>Rejection Comments</label><textarea id="rejectComments"></textarea></div>
-  </div>
 </div>
+
+
+
+<!-- =====================================================
+     ROLE ATTRIBUTES
+===================================================== -->
+
+<div class="section">
+
+    <div class="section-head">
+
+        <span>
+            Role Attribute Review
+        </span>
+
+        <span class="badge">
+            Ratings 0-5
+        </span>
+
+    </div>
+
+
+    <div id="attrArea"></div>
+
+</div>
+
+
+
+<!-- =====================================================
+     AUTOMATIC RATING SUMMARY
+===================================================== -->
+
+<div class="section">
+
+    <div class="section-head">
+
+        <span>
+            Automatic Rating Summary
+        </span>
+
+        <span class="badge">
+            Final = 50% Self + 50% Head
+        </span>
+
+    </div>
+
+
+    <table class="summary-table">
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    Rating
+                </th>
+
+                <th>
+                    Employee Self
+                </th>
+
+                <th>
+                    Department Head
+                </th>
+
+                <th>
+                    Final Section
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+
+            <tr>
+
+                <td>
+                    KRA Rating / 5
+                </td>
+
+                <td id="sumSelfKra">
+                    0.00
+                </td>
+
+                <td id="sumHeadKra">
+                    0.00
+                </td>
+
+                <td id="sumFinalKra">
+                    0.00
+                </td>
+
+            </tr>
+
+
+            <tr>
+
+                <td>
+                    Role Attribute Rating / 5
+                </td>
+
+                <td id="sumSelfRole">
+                    0.00
+                </td>
+
+                <td id="sumHeadRole">
+                    0.00
+                </td>
+
+                <td id="sumFinalRole">
+                    0.00
+                </td>
+
+            </tr>
+
+
+            <tr>
+
+                <td>
+                    Overall Rating / 5
+                </td>
+
+                <td id="sumSelfOverall">
+                    0.00
+                </td>
+
+                <td id="sumHeadOverall">
+                    0.00
+                </td>
+
+                <td>
+                    -
+                </td>
+
+            </tr>
+
+
+            <tr class="final-row">
+
+                <td>
+                    Final Appraisal Rating / 5
+                </td>
+
+                <td
+                    colspan="3"
+                    id="sumFinalOverall">
+
+                    0.00
+
+                </td>
+
+            </tr>
+
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+
+<!-- =====================================================
+     EMPLOYEE REVIEW INFORMATION
+===================================================== -->
+
+<div class="section">
+
+    <div class="section-head">
+
+        <span>
+            Employee Review Information
+        </span>
+
+    </div>
+
+
+    <div class="two-col">
+
+
+        <div>
+
+            <label>
+                Facilitating Factors
+            </label>
+
+            <div
+                class="readonly"
+                id="rvFac">
+
+                -
+
+            </div>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Constraining Factors
+            </label>
+
+            <div
+                class="readonly"
+                id="rvCon">
+
+                -
+
+            </div>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                Outstanding Achievement
+            </label>
+
+            <div
+                class="readonly"
+                id="rvOut">
+
+                -
+
+            </div>
+
+        </div>
+
+
+        <div>
+
+            <label>
+                My Learnings
+            </label>
+
+            <div
+                class="readonly"
+                id="rvLearn">
+
+                -
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <div style="margin-top:14px">
+
+        <label>
+            Appraiser Comments
+        </label>
+
+        <textarea id="apprComments"></textarea>
+
+    </div>
+
+
+    <div
+        id="rejectBox"
+        class="reject-box hidden">
+
+        <label>
+            Rejection Comments
+        </label>
+
+        <textarea id="rejectComments"></textarea>
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
 
 <div class="footer">
-  <span class="status" id="statusText"></span>
-  <button id="saveBtn" onclick="saveDraft()" disabled>Save Draft</button>
-  <button id="rejectBtn" class="danger" onclick="rejectAppraisal()" disabled>Reject</button>
-  <button id="approveBtn" class="solid green" onclick="approveAppraisal()" disabled>Approve</button>
+
+    <span
+        class="status"
+        id="statusText">
+    </span>
+
+
+    <button
+        id="saveBtn"
+        onclick="saveDraft()"
+        disabled>
+
+        Save Draft
+
+    </button>
+
+
+    <button
+        id="rejectBtn"
+        class="danger"
+        onclick="rejectAppraisal()"
+        disabled>
+
+        Reject
+
+    </button>
+
+
+    <button
+        id="approveBtn"
+        class="solid green"
+        onclick="approveAppraisal()"
+        disabled>
+
+        Approve
+
+    </button>
+
 </div>
 
-<div id="modalBackdrop" class="modal-backdrop hidden" onclick="modalBackdropClick(event)">
-  <div id="modalBox" class="modal">
-    <div class="modal-head" id="modalTitle">Message</div>
-    <div class="modal-body" id="modalMessage"></div>
-    <div class="modal-actions"><button class="solid" onclick="closeModal()">OK</button></div>
-  </div>
+
+
+<!-- =====================================================
+     POPUP
+===================================================== -->
+
+<div
+    id="modalBackdrop"
+    class="modal-backdrop hidden"
+    onclick="modalBackdropClick(event)">
+
+    <div
+        id="modalBox"
+        class="modal">
+
+        <div
+            class="modal-head"
+            id="modalTitle">
+
+            Message
+
+        </div>
+
+
+        <div
+            class="modal-body"
+            id="modalMessage">
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                class="solid"
+                onclick="closeModal()">
+
+                OK
+
+            </button>
+
+        </div>
+
+    </div>
+
 </div>
+
+
 
 <script>
-const REPORTS={review:'Review_Report',kra:'KRA_Report',goal:'Goal_Report',competency:'Competency_Report'};
-const STAGE={KRA_SUBMITTED:'KRA Submitted',SELF_SUBMITTED:'Self Rating Submitted',HEAD_APPROVED:'Head Approved',APPROVED:'Approved',REJECTED:'Rejected'};
-const FINAL_SELF_WEIGHT=50;
-const FINAL_HEAD_WEIGHT=50;
-const state={reviews:[],employees:[],review:null,kras:[],competencies:[],settings:{kraWeight:80,roleWeight:20}};
-console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-12-FINAL-FLOW-01');
 
-function showModal(title,message,type){document.getElementById('modalTitle').textContent=title||'Message';document.getElementById('modalMessage').textContent=message||'';document.getElementById('modalBox').className='modal'+(type?' '+type:'');document.getElementById('modalBackdrop').classList.remove('hidden')}
-function closeModal(){document.getElementById('modalBackdrop').classList.add('hidden')}
-function modalBackdropClick(e){if(e.target.id==='modalBackdrop')closeModal()}
-function setStatus(msg,ok){const e=document.getElementById('statusText');e.textContent=msg||'';e.classList.remove('ok','bad');if(ok===true)e.classList.add('ok');if(ok===false)e.classList.add('bad')}
-function esc(v){return(v===null||v===undefined?'':String(v)).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]||c))}
-function textValue(v){if(v===null||v===undefined)return'';if(typeof v==='object')return String(v.display_value||v.zc_display_value||v.value||'');return String(v)}
-function lookupId(v){if(!v)return'';if(typeof v==='object')return String(v.ID||v.id||'');return String(v)}
-function same(a,b){return textValue(a).trim()===String(b).trim()}
-function numberValue(v,fallback=0){const n=Number(String(v===null||v===undefined?'':v).replace(/,/g,'').replace(/%/g,'').trim());return Number.isFinite(n)?n:fallback}
-function num(v,places=2){const n=numberValue(v,0),f=Math.pow(10,places);return String(Math.round((n+Number.EPSILON)*f)/f)}
-function round2(v){return Math.round((numberValue(v,0)+Number.EPSILON)*100)/100}
-function ratingValid(v){const n=numberValue(v,NaN);return Number.isFinite(n)&&n>=0&&n<=5}
-function errorText(err){let s='';try{s=((err&&err.responseText)||'')+' '+((err&&err.message)||'')+' '+((err&&err.description)||'')+' '+((err&&err.code)||'')}catch(e){}return s}
-function noData(err){const t=errorText(err);return t.indexOf('3100')>=0||t.indexOf('No Data Available')>=0}
-function friendlyError(err,context){const raw=errorText(err);let msg='Unable to complete this action. Please try again.';if(raw.indexOf('3002')>=0)msg='One of the values is not valid for its Creator field. Please check the ratings and settings.';else if(raw.indexOf('2945')>=0||raw.indexOf('EXTRA_KEY_FOUND_IN_JSON')>=0)msg='Creator rejected the update format. Please refresh and try again.';else if(raw.indexOf('3100')>=0)msg='No matching record was found.';if(context)msg=context+'\n\n'+msg;showModal('Action could not be completed',msg,'error');console.error(context||'Creator error',err)}
-function setBusy(id,busy,text){const b=document.getElementById(id);if(!b)return;if(busy){b.dataset.oldText=b.textContent;b.disabled=true;if(text)b.textContent=text}else{b.disabled=false;if(b.dataset.oldText)b.textContent=b.dataset.oldText}}
+/* =====================================================
+   CONFIGURATION
+===================================================== */
 
-function getAll(reportName){let page=1,out=[];function next(){return ZOHO.CREATOR.API.getAllRecords({reportName,page,pageSize:200}).then(r=>{const rows=r&&r.data?r.data:[];out=out.concat(rows);if(rows.length<200||page>=50)return out;page++;return next()}).catch(err=>{if(noData(err))return out;throw err})}return next()}
-function updateRecord(reportName,id,fields){const wrapped={reportName,id:String(id),data:{data:fields}};return ZOHO.CREATOR.API.updateRecord(wrapped).then(r=>{if(r&&r.code==3000)return r.data;throw r}).catch(err=>{const t=errorText(err);if(t.indexOf('2945')>=0||t.indexOf('EXTRA_KEY_FOUND_IN_JSON')>=0){return ZOHO.CREATOR.API.updateRecord({reportName,id:String(id),data:fields}).then(r=>{if(r&&r.code==3000)return r.data;throw r})}throw err})}
-function getStage(review){const s=textValue(review&&review.Process_Stage).trim();if(s)return s;const status=textValue(review&&review.Status);if(status==='Head Approved')return STAGE.HEAD_APPROVED;if(status==='Approved')return STAGE.APPROVED;if(status==='Rejected')return STAGE.REJECTED;if(status==='Submitted for Approval')return STAGE.SELF_SUBMITTED;return STAGE.KRA_SUBMITTED}
-function employeeFieldMatches(field,empId,empName){const id=lookupId(field);if(id&&String(id)===String(empId))return true;return textValue(field).trim()===String(empName||'').trim()}
-function fullGoalText(goal){return textValue(goal&&goal.Description)||textValue(goal&&goal.Goal_Name)}
+var REPORTS =
+{
+    review:
+        "Review_Report",
 
-async function loadInitial(){state.reviews=await getAll(REPORTS.review);const seen={},emps=[];state.reviews.forEach(r=>{if(getStage(r)!==STAGE.SELF_SUBMITTED)return;const id=lookupId(r.Employee_Lookup);if(!id||seen[id])return;seen[id]=true;emps.push({ID:id,name:textValue(r.Employee_Lookup)||id,department:textValue(r.Department)})});state.employees=emps;document.getElementById('empSelect').innerHTML='<option value="">-- Select --</option>'+emps.map(e=>'<option value="'+esc(e.ID)+'">'+esc(e.name)+'</option>').join('');setStatus(emps.length?'Ready.':'No Self Rating submissions waiting for review.',!!emps.length)}
-function findEmployee(id){return state.employees.find(e=>String(e.ID)===String(id))||null}
-function findReview(empId,q,y){return state.reviews.find(r=>lookupId(r.Employee_Lookup)===String(empId)&&same(r.Quarter,q)&&same(r.Year_field,y)&&getStage(r)===STAGE.SELF_SUBMITTED)||null}
+    kra:
+        "KRA_Report",
 
-async function loadAppraisal(){const empId=document.getElementById('empSelect').value,q=document.getElementById('quarterSelect').value,y=document.getElementById('yearSelect').value,emp=findEmployee(empId);if(!emp){showModal('Department Head Review','Select an employee.','error');return}const review=findReview(empId,q,y);if(!review){showModal('Department Head Review','No Self Rating submission was found for this Employee / Quarter / Year.','error');return}setStatus('Loading appraisal...',null);try{const results=await Promise.all([getAll(REPORTS.kra),getAll(REPORTS.goal),getAll(REPORTS.competency)]);const kras=results[0].filter(k=>employeeFieldMatches(k.Employee_Name,empId,emp.name)&&same(k.Quarter,q)&&same(k.Year_field1,y)),goals=results[1],attrs=results[2].filter(a=>employeeFieldMatches(a.Employee_Name1,empId,emp.name)&&same(a.Quarter,q)&&same(a.Year_field1,y));state.review=review;state.kras=kras.map(k=>({kra:k,goals:goals.filter(g=>lookupId(g.KRA)===String(k.ID))}));state.competencies=attrs;state.settings.kraWeight=numberValue(review.KRA_Section_Weight,80);state.settings.roleWeight=numberValue(review.Role_Attribute_Weight,20);render();setStatus('Loaded.',true)}catch(err){friendlyError(err,'Appraisal could not be loaded.')}}
+    goal:
+        "Goal_Report",
 
-function render(){document.getElementById('resultArea').classList.remove('hidden');const emp=findEmployee(document.getElementById('empSelect').value);document.getElementById('rvEmployee').textContent=emp?emp.name:'-';document.getElementById('rvDepartment').textContent=textValue(state.review.Department)||'-';document.getElementById('rvPeriod').textContent=textValue(state.review.Quarter)+' / '+textValue(state.review.Year_field);document.getElementById('statusBadge').textContent=getStage(state.review);document.getElementById('settingKraWeight').value=state.settings.kraWeight;document.getElementById('settingRoleWeight').value=state.settings.roleWeight;document.getElementById('rvFac').textContent=textValue(state.review.Facilitating_Factors1)||'-';document.getElementById('rvCon').textContent=textValue(state.review.Constraining_Factors)||'-';document.getElementById('rvOut').textContent=textValue(state.review.Outstanding_Achievement)||'-';document.getElementById('rvLearn').textContent=textValue(state.review.My_Learnings)||'-';document.getElementById('apprComments').value=textValue(state.review.Appraiser_Comments);document.getElementById('rejectBox').classList.add('hidden');renderKras();renderAttrs();settingsChanged();document.getElementById('saveBtn').disabled=false;document.getElementById('rejectBtn').disabled=false;document.getElementById('approveBtn').disabled=false}
+    competency:
+        "Competency_Report"
+};
 
-function renderKras(){document.getElementById('kraArea').innerHTML=state.kras.length?state.kras.map(pair=>'<div class="kra-card"><div class="goal-head">'+esc(textValue(pair.kra.KRA_Name))+' <span style="font-weight:400;color:var(--muted)">- KRA Weight '+esc(textValue(pair.kra.Weightage))+'%</span></div><div style="font-size:12px;color:var(--muted)">'+esc(textValue(pair.kra.Description))+'</div>'+pair.goals.map(g=>'<div class="goal-grid"><div><label>Task</label><div class="readonly">'+esc(fullGoalText(g))+'</div></div><div><label>Achievement</label><div class="readonly">'+esc(textValue(g.Achievement)||'-')+'</div></div><div><label>Weight</label><div class="readonly">'+esc(textValue(g.Weightage))+'%</div></div><div><label>Self Rating</label><div class="readonly">'+esc(textValue(g.Self_Rating)||'0')+'</div></div><div><label>Head Rating (0-5)</label><input type="number" min="0" max="5" step="0.1" value="'+esc(textValue(g.Appraiser_Rating))+'" oninput="headGoalChanged(\''+g.ID+'\',this.value)"></div></div>').join('')+'</div>').join(''):'<div style="color:var(--muted)">No KRA records found.</div>'}
-function renderAttrs(){document.getElementById('attrArea').innerHTML=state.competencies.length?state.competencies.map(a=>'<div class="attr-grid"><div><label>Attribute</label><div class="readonly">'+esc(textValue(a.Attribute_Name))+'</div></div><div><label>Weight</label><div class="readonly">'+esc(textValue(a.Weightage))+'%</div></div><div><label>Self Rating</label><div class="readonly">'+esc(textValue(a.Rating)||'0')+'</div></div><div><label>Head Rating (0-5)</label><input type="number" min="0" max="5" step="0.1" value="'+esc(textValue(a.Appraiser_Rating))+'" oninput="headAttrChanged(\''+a.ID+'\',this.value)"></div></div>').join(''):'<div style="color:var(--muted)">No Role Attribute records found.</div>'}
-function headGoalChanged(id,v){for(const p of state.kras){const g=p.goals.find(x=>String(x.ID)===String(id));if(g){g.Appraiser_Rating=v;break}}renderSummary()}
-function headAttrChanged(id,v){const a=state.competencies.find(x=>String(x.ID)===String(id));if(a)a.Appraiser_Rating=v;renderSummary()}
-function settingsChanged(){state.settings.kraWeight=numberValue(document.getElementById('settingKraWeight').value,0);state.settings.roleWeight=numberValue(document.getElementById('settingRoleWeight').value,0);const total=state.settings.kraWeight+state.settings.roleWeight;document.getElementById('settingTotal').value=round2(total);const b=document.getElementById('settingsBadge');b.textContent=round2(total)+'%';b.className='badge '+(Math.abs(total-100)<.01?'ok':'bad');renderSummary()}
-function weightedRating(items,ratingGetter,weightGetter){let sum=0,weight=0,count=0,plain=0;items.forEach(item=>{const r=numberValue(ratingGetter(item),NaN);if(!Number.isFinite(r))return;const w=Math.max(0,numberValue(weightGetter(item),0));plain+=r;count++;if(w>0){sum+=r*w;weight+=w}});if(weight>0)return sum/weight;return count?plain/count:0}
-function calculateScores(){const goals=[];state.kras.forEach(p=>p.goals.forEach(g=>goals.push(g)));const selfKra=weightedRating(goals,g=>g.Self_Rating,g=>g.Weightage),headKra=weightedRating(goals,g=>g.Appraiser_Rating,g=>g.Weightage),selfRole=weightedRating(state.competencies,a=>a.Rating,a=>a.Weightage),headRole=weightedRating(state.competencies,a=>a.Appraiser_Rating,a=>a.Weightage),kw=state.settings.kraWeight,rw=state.settings.roleWeight,total=kw+rw,selfOverall=total>0?(selfKra*kw+selfRole*rw)/total:0,headOverall=total>0?(headKra*kw+headRole*rw)/total:0,finalKra=(selfKra*FINAL_SELF_WEIGHT+headKra*FINAL_HEAD_WEIGHT)/(FINAL_SELF_WEIGHT+FINAL_HEAD_WEIGHT),finalRole=(selfRole*FINAL_SELF_WEIGHT+headRole*FINAL_HEAD_WEIGHT)/(FINAL_SELF_WEIGHT+FINAL_HEAD_WEIGHT),finalOverall=(selfOverall*FINAL_SELF_WEIGHT+headOverall*FINAL_HEAD_WEIGHT)/(FINAL_SELF_WEIGHT+FINAL_HEAD_WEIGHT);return{selfKra:round2(selfKra),headKra:round2(headKra),selfRole:round2(selfRole),headRole:round2(headRole),selfOverall:round2(selfOverall),headOverall:round2(headOverall),finalKra:round2(finalKra),finalRole:round2(finalRole),finalOverall:round2(finalOverall)}}
-function renderSummary(){if(!state.review)return;const s=calculateScores();document.getElementById('sumSelfKra').textContent=s.selfKra.toFixed(2);document.getElementById('sumHeadKra').textContent=s.headKra.toFixed(2);document.getElementById('sumFinalKra').textContent=s.finalKra.toFixed(2);document.getElementById('sumSelfRole').textContent=s.selfRole.toFixed(2);document.getElementById('sumHeadRole').textContent=s.headRole.toFixed(2);document.getElementById('sumFinalRole').textContent=s.finalRole.toFixed(2);document.getElementById('sumSelfOverall').textContent=s.selfOverall.toFixed(2);document.getElementById('sumHeadOverall').textContent=s.headOverall.toFixed(2);document.getElementById('sumFinalOverall').textContent=s.finalOverall.toFixed(2)}
-function validateSettings(){return Math.abs((state.settings.kraWeight+state.settings.roleWeight)-100)<.01}
-function validateHeadRatings(){for(const p of state.kras){for(const g of p.goals){if(!ratingValid(g.Appraiser_Rating))return'Enter Department Head Rating from 0 to 5 for every task.'}}for(const a of state.competencies){if(!ratingValid(a.Appraiser_Rating))return'Enter Department Head Rating from 0 to 5 for every Role Attribute.'}return''}
-function ratingLabel(v){const n=numberValue(v,0);if(n>=4.5)return'Outstanding';if(n>=4)return'Exceeds Expectations';if(n>=3)return'Meets Expectations';if(n>=2)return'Needs Improvement';return'Unacceptable'}
-async function saveAllRatings(){const updates=[];for(const p of state.kras){for(const g of p.goals){if(String(textValue(g.Appraiser_Rating)).trim()!=='')updates.push(updateRecord(REPORTS.goal,g.ID,{Appraiser_Rating:num(g.Appraiser_Rating,2)}))}}for(const a of state.competencies){if(String(textValue(a.Appraiser_Rating)).trim()!=='')updates.push(updateRecord(REPORTS.competency,a.ID,{Appraiser_Rating:num(a.Appraiser_Rating,2)}))}await Promise.all(updates)}
-function reviewScoreFields(stage){const s=calculateScores();const fields={Appraiser_Comments:document.getElementById('apprComments').value,KRA_Section_Weight:num(state.settings.kraWeight),Role_Attribute_Weight:num(state.settings.roleWeight),Self_KRA_Rating:num(s.selfKra),Self_Role_Rating:num(s.selfRole),Self_Overall_Rating:num(s.selfOverall),Head_KRA_Rating:num(s.headKra),Head_Role_Rating:num(s.headRole),Head_Overall_Rating:num(s.headOverall),Final_Appraisal_Rating:num(s.finalOverall),KRA_Score:num(s.finalKra),Competency_Score:num(s.finalRole),Final_Score:num(s.finalOverall),Overall_Rating:ratingLabel(s.finalOverall)};if(stage){fields.Process_Stage=stage;if(stage===STAGE.HEAD_APPROVED)fields.Status='Head Approved'}return fields}
 
-async function saveDraft(){if(!state.review)return;if(!validateSettings()){showModal('Performance Settings','KRA Section Weight + Role Attribute Weight must equal 100%.','error');return}setBusy('saveBtn',true,'Saving...');try{await saveAllRatings();await updateRecord(REPORTS.review,state.review.ID,reviewScoreFields(null));showModal('Draft saved','Department Head ratings and Performance Settings were saved.','success');setStatus('Draft saved.',true)}catch(err){friendlyError(err,'Draft could not be saved.')}finally{setBusy('saveBtn',false)}}
-async function approveAppraisal(){if(!state.review)return;if(!validateSettings()){showModal('Performance Settings','KRA Section Weight + Role Attribute Weight must equal 100%.','error');return}const problem=validateHeadRatings();if(problem){showModal('Department Head Review',problem,'error');return}setBusy('approveBtn',true,'Approving...');try{await saveAllRatings();const fields=reviewScoreFields(STAGE.HEAD_APPROVED);await updateRecord(REPORTS.review,state.review.ID,fields);showModal('Approved','Department Head review was approved. Overall Head Rating and Final Appraisal Rating were calculated automatically.','success');setStatus('Approved and sent to next stage.',true);document.getElementById('saveBtn').disabled=true;document.getElementById('rejectBtn').disabled=true;document.getElementById('approveBtn').disabled=true}catch(err){friendlyError(err,'Approval could not be completed.')}finally{setBusy('approveBtn',false)}}
-function rejectAppraisal(){if(!state.review)return;const box=document.getElementById('rejectBox');if(box.classList.contains('hidden')){box.classList.remove('hidden');document.getElementById('rejectComments').focus();return}const comments=document.getElementById('rejectComments').value.trim();if(!comments){showModal('Reject appraisal','Enter rejection comments.','error');return}setBusy('rejectBtn',true,'Rejecting...');updateRecord(REPORTS.review,state.review.ID,{Status:'Rejected',Process_Stage:STAGE.REJECTED,Rejection_Comments:comments,Appraiser_Comments:document.getElementById('apprComments').value}).then(()=>{showModal('Rejected','The appraisal was rejected. The submitted Self Rating remains locked.','success');setStatus('Appraisal rejected.',true);document.getElementById('saveBtn').disabled=true;document.getElementById('rejectBtn').disabled=true;document.getElementById('approveBtn').disabled=true}).catch(err=>friendlyError(err,'Rejection could not be completed.')).finally(()=>setBusy('rejectBtn',false))}
 
-if(window.ZOHO&&ZOHO.CREATOR){ZOHO.CREATOR.init().then(()=>loadInitial()).catch(err=>{friendlyError(err,'Creator widget could not be initialized.');setStatus('Initialization failed.',false)})}else{showModal('Creator SDK not detected','Open this page inside Zoho Creator.','error')}
+/* =====================================================
+   WORKFLOW STAGES
+===================================================== */
+
+var STAGE =
+{
+    KRA_SUBMITTED:
+        "KRA Submitted",
+
+    SELF_SUBMITTED:
+        "Self Rating Submitted",
+
+    HEAD_APPROVED:
+        "Head Approved",
+
+    APPROVED:
+        "Approved",
+
+    REJECTED:
+        "Rejected"
+};
+
+
+
+/* =====================================================
+   FINAL SELF VS HEAD WEIGHT
+
+   This is COMPLETELY SEPARATE from:
+
+   KRA Section Weight
+   Role Attribute Weight
+===================================================== */
+
+var FINAL_SELF_WEIGHT =
+    50;
+
+
+var FINAL_HEAD_WEIGHT =
+    50;
+
+
+
+/* =====================================================
+   STATE
+===================================================== */
+
+var state =
+{
+    reviews:
+        [],
+
+    employees:
+        [],
+
+    review:
+        null,
+
+    kras:
+        [],
+
+    competencies:
+        [],
+
+    settings:
+    {
+        kraWeight:
+            80,
+
+        roleWeight:
+            20
+    }
+};
+
+
+console.log(
+    "DEPARTMENT HEAD REVIEW VERSION: 2026-08-13-FINAL-STATUS-FIX-01"
+);
+
+
+
+/* =====================================================
+   POPUP
+===================================================== */
+
+function showModal(
+    title,
+    message,
+    type
+)
+{
+    document
+        .getElementById(
+            "modalTitle"
+        )
+        .textContent =
+        title ||
+        "Message";
+
+
+    document
+        .getElementById(
+            "modalMessage"
+        )
+        .textContent =
+        message ||
+        "";
+
+
+    document
+        .getElementById(
+            "modalBox"
+        )
+        .className =
+        "modal" +
+        (
+            type
+            ?
+            " " + type
+            :
+            ""
+        );
+
+
+    document
+        .getElementById(
+            "modalBackdrop"
+        )
+        .classList
+        .remove(
+            "hidden"
+        );
+}
+
+
+
+function closeModal()
+{
+    document
+        .getElementById(
+            "modalBackdrop"
+        )
+        .classList
+        .add(
+            "hidden"
+        );
+}
+
+
+
+function modalBackdropClick(event)
+{
+    if(
+        event.target.id ===
+        "modalBackdrop"
+    )
+    {
+        closeModal();
+    }
+}
+
+
+
+/* =====================================================
+   STATUS MESSAGE
+===================================================== */
+
+function setStatus(
+    message,
+    ok
+)
+{
+    var element =
+        document.getElementById(
+            "statusText"
+        );
+
+
+    element.textContent =
+        message ||
+        "";
+
+
+    element.classList.remove(
+        "ok",
+        "bad"
+    );
+
+
+    if(ok === true)
+    {
+        element.classList.add(
+            "ok"
+        );
+    }
+
+
+    if(ok === false)
+    {
+        element.classList.add(
+            "bad"
+        );
+    }
+}
+
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function esc(value)
+{
+    if(
+        value === null ||
+        value === undefined
+    )
+    {
+        return "";
+    }
+
+
+    return String(value)
+        .replace(
+            /[&<>"]/g,
+            function(character)
+            {
+                var map =
+                {
+                    "&":
+                        "&amp;",
+
+                    "<":
+                        "&lt;",
+
+                    ">":
+                        "&gt;",
+
+                    '"':
+                        "&quot;"
+                };
+
+
+                return map[
+                    character
+                ];
+            }
+        );
+}
+
+
+
+/* =====================================================
+   VALUE TO TEXT
+===================================================== */
+
+function textValue(value)
+{
+    if(
+        value === null ||
+        value === undefined
+    )
+    {
+        return "";
+    }
+
+
+    if(
+        typeof value ===
+        "object"
+    )
+    {
+        return String(
+
+            value.display_value
+
+            ||
+
+            value.zc_display_value
+
+            ||
+
+            value.value
+
+            ||
+
+            ""
+        );
+    }
+
+
+    return String(value);
+}
+
+
+
+/* =====================================================
+   LOOKUP ID
+===================================================== */
+
+function lookupId(value)
+{
+    if(!value)
+    {
+        return "";
+    }
+
+
+    if(
+        typeof value ===
+        "object"
+    )
+    {
+        return String(
+
+            value.ID
+
+            ||
+
+            value.id
+
+            ||
+
+            ""
+        );
+    }
+
+
+    return String(value);
+}
+
+
+
+/* =====================================================
+   SAME VALUE
+===================================================== */
+
+function same(
+    valueA,
+    valueB
+)
+{
+    return (
+
+        textValue(
+            valueA
+        )
+        .trim()
+
+        ===
+
+        String(
+            valueB
+        )
+        .trim()
+    );
+}
+
+
+
+/* =====================================================
+   NUMBER HELPERS
+===================================================== */
+
+function numberValue(
+    value,
+    fallback
+)
+{
+    if(
+        fallback === undefined
+    )
+    {
+        fallback = 0;
+    }
+
+
+    var cleaned =
+        String(
+            value === null ||
+            value === undefined
+            ?
+            ""
+            :
+            value
+        )
+        .replace(
+            /,/g,
+            ""
+        )
+        .replace(
+            /%/g,
+            ""
+        )
+        .trim();
+
+
+    var number =
+        Number(
+            cleaned
+        );
+
+
+    if(
+        Number.isFinite(
+            number
+        )
+    )
+    {
+        return number;
+    }
+
+
+    return fallback;
+}
+
+
+
+function num(
+    value,
+    places
+)
+{
+    if(
+        places === undefined
+    )
+    {
+        places = 2;
+    }
+
+
+    var number =
+        numberValue(
+            value,
+            0
+        );
+
+
+    var factor =
+        Math.pow(
+            10,
+            places
+        );
+
+
+    return String(
+
+        Math.round(
+            (
+                number +
+                Number.EPSILON
+            )
+            *
+            factor
+        )
+
+        /
+
+        factor
+    );
+}
+
+
+
+function round2(value)
+{
+    return (
+
+        Math.round(
+            (
+                numberValue(
+                    value,
+                    0
+                )
+                +
+                Number.EPSILON
+            )
+            *
+            100
+        )
+
+        /
+
+        100
+    );
+}
+
+
+
+/* =====================================================
+   VALID RATING 0 TO 5
+===================================================== */
+
+function ratingValid(value)
+{
+    var number =
+        numberValue(
+            value,
+            NaN
+        );
+
+
+    return (
+
+        Number.isFinite(
+            number
+        )
+
+        &&
+
+        number >= 0
+
+        &&
+
+        number <= 5
+    );
+}
+
+
+
+/* =====================================================
+   ERROR HANDLING
+===================================================== */
+
+function errorText(error)
+{
+    var text =
+        "";
+
+
+    try
+    {
+        text +=
+            (
+                error &&
+                error.responseText
+            )
+            ||
+            "";
+
+
+        text +=
+            " " +
+            (
+                error &&
+                error.message
+            )
+            ||
+            "";
+
+
+        text +=
+            " " +
+            (
+                error &&
+                error.description
+            )
+            ||
+            "";
+
+
+        text +=
+            " " +
+            (
+                error &&
+                error.code
+            )
+            ||
+            "";
+    }
+    catch(e)
+    {
+    }
+
+
+    return text;
+}
+
+
+
+function noData(error)
+{
+    var text =
+        errorText(
+            error
+        );
+
+
+    return (
+
+        text.indexOf(
+            "3100"
+        )
+        >=
+        0
+
+        ||
+
+        text.indexOf(
+            "No Data Available"
+        )
+        >=
+        0
+    );
+}
+
+
+
+function friendlyError(
+    error,
+    context
+)
+{
+    var raw =
+        errorText(
+            error
+        );
+
+
+    var message =
+        "Unable to complete this action. Please try again.";
+
+
+    if(
+        raw.indexOf(
+            "Invalid column value for 'Status'"
+        )
+        >=
+        0
+    )
+    {
+        message =
+            "The Creator Status field does not accept the value being sent. This version keeps Department Head approval as Status = Submitted for Approval and uses Process_Stage = Head Approved.";
+    }
+    else if(
+        raw.indexOf(
+            "3002"
+        )
+        >=
+        0
+    )
+    {
+        message =
+            "One of the values is not valid for its Creator field. Check ratings and Performance Settings.";
+    }
+    else if(
+        raw.indexOf(
+            "2945"
+        )
+        >=
+        0
+
+        ||
+
+        raw.indexOf(
+            "EXTRA_KEY_FOUND_IN_JSON"
+        )
+        >=
+        0
+    )
+    {
+        message =
+            "Creator rejected the update format. Refresh the page once and try again.";
+    }
+    else if(
+        raw.indexOf(
+            "3100"
+        )
+        >=
+        0
+    )
+    {
+        message =
+            "No matching record was found.";
+    }
+
+
+    if(context)
+    {
+        message =
+            context +
+            "\n\n" +
+            message;
+    }
+
+
+    showModal(
+        "Action could not be completed",
+        message,
+        "error"
+    );
+
+
+    console.error(
+        context ||
+        "Creator error",
+        error
+    );
+}
+
+
+
+/* =====================================================
+   BUTTON BUSY STATE
+===================================================== */
+
+function setBusy(
+    id,
+    busy,
+    text
+)
+{
+    var button =
+        document.getElementById(
+            id
+        );
+
+
+    if(!button)
+    {
+        return;
+    }
+
+
+    if(busy)
+    {
+        button.dataset.oldText =
+            button.textContent;
+
+
+        button.disabled =
+            true;
+
+
+        if(text)
+        {
+            button.textContent =
+                text;
+        }
+    }
+    else
+    {
+        button.disabled =
+            false;
+
+
+        if(
+            button.dataset.oldText
+        )
+        {
+            button.textContent =
+                button.dataset.oldText;
+        }
+    }
+}
+
+
+
+/* =====================================================
+   GET ALL CREATOR RECORDS
+===================================================== */
+
+function getAll(
+    reportName
+)
+{
+    var page =
+        1;
+
+
+    var output =
+        [];
+
+
+    function next()
+    {
+        return ZOHO.CREATOR.API
+            .getAllRecords(
+                {
+                    reportName:
+                        reportName,
+
+                    page:
+                        page,
+
+                    pageSize:
+                        200
+                }
+            )
+
+            .then(
+                function(response)
+                {
+                    var rows =
+                        (
+                            response &&
+                            response.data
+                        )
+                        ?
+                        response.data
+                        :
+                        [];
+
+
+                    output =
+                        output.concat(
+                            rows
+                        );
+
+
+                    if(
+                        rows.length < 200
+
+                        ||
+
+                        page >= 50
+                    )
+                    {
+                        return output;
+                    }
+
+
+                    page++;
+
+
+                    return next();
+                }
+            )
+
+            .catch(
+                function(error)
+                {
+                    if(
+                        noData(
+                            error
+                        )
+                    )
+                    {
+                        return output;
+                    }
+
+
+                    throw error;
+                }
+            );
+    }
+
+
+    return next();
+}
+
+
+
+/* =====================================================
+   UPDATE RECORD
+
+   Supports both Creator V1 payload behaviours.
+===================================================== */
+
+function updateRecord(
+    reportName,
+    recordId,
+    fields
+)
+{
+    var wrapped =
+    {
+        reportName:
+            reportName,
+
+        id:
+            String(
+                recordId
+            ),
+
+        data:
+        {
+            data:
+                fields
+        }
+    };
+
+
+    console.log(
+        "UPDATE REQUEST:",
+        reportName,
+        recordId,
+        wrapped
+    );
+
+
+    return ZOHO.CREATOR.API
+        .updateRecord(
+            wrapped
+        )
+
+        .then(
+            function(response)
+            {
+                console.log(
+                    "UPDATE RESPONSE:",
+                    reportName,
+                    response
+                );
+
+
+                if(
+                    response &&
+                    response.code == 3000
+                )
+                {
+                    return response.data;
+                }
+
+
+                throw response;
+            }
+        )
+
+        .catch(
+            function(error)
+            {
+                var text =
+                    errorText(
+                        error
+                    );
+
+
+                /*
+                    Some Creator widget environments
+                    expect data directly.
+
+                    Only retry for the JSON structure
+                    error.
+                */
+
+                if(
+                    text.indexOf(
+                        "2945"
+                    )
+                    >=
+                    0
+
+                    ||
+
+                    text.indexOf(
+                        "EXTRA_KEY_FOUND_IN_JSON"
+                    )
+                    >=
+                    0
+                )
+                {
+                    var fallback =
+                    {
+                        reportName:
+                            reportName,
+
+                        id:
+                            String(
+                                recordId
+                            ),
+
+                        data:
+                            fields
+                    };
+
+
+                    console.warn(
+                        "Retrying update with alternate payload.",
+                        fallback
+                    );
+
+
+                    return ZOHO.CREATOR.API
+                        .updateRecord(
+                            fallback
+                        )
+
+                        .then(
+                            function(response2)
+                            {
+                                if(
+                                    response2 &&
+                                    response2.code == 3000
+                                )
+                                {
+                                    return response2.data;
+                                }
+
+
+                                throw response2;
+                            }
+                        );
+                }
+
+
+                throw error;
+            }
+        );
+}
+
+
+
+/* =====================================================
+   GET PROCESS STAGE
+===================================================== */
+
+function getStage(review)
+{
+    var processStage =
+        textValue(
+            review &&
+            review.Process_Stage
+        )
+        .trim();
+
+
+    if(processStage)
+    {
+        return processStage;
+    }
+
+
+    /*
+       Backward compatibility for old records.
+    */
+
+    var status =
+        textValue(
+            review &&
+            review.Status
+        );
+
+
+    if(
+        status ===
+        "Approved"
+    )
+    {
+        return STAGE.APPROVED;
+    }
+
+
+    if(
+        status ===
+        "Rejected"
+    )
+    {
+        return STAGE.REJECTED;
+    }
+
+
+    /*
+       Old records with Submitted for Approval
+       are treated as Self Rating Submitted.
+
+       New records should ALWAYS have
+       Process_Stage.
+    */
+
+    if(
+        status ===
+        "Submitted for Approval"
+    )
+    {
+        return STAGE.SELF_SUBMITTED;
+    }
+
+
+    return STAGE.KRA_SUBMITTED;
+}
+
+
+
+/* =====================================================
+   EMPLOYEE FIELD MATCH
+===================================================== */
+
+function employeeFieldMatches(
+    field,
+    employeeId,
+    employeeName
+)
+{
+    var id =
+        lookupId(
+            field
+        );
+
+
+    if(
+        id &&
+        String(id) ===
+        String(employeeId)
+    )
+    {
+        return true;
+    }
+
+
+    return (
+
+        textValue(
+            field
+        )
+        .trim()
+
+        ===
+
+        String(
+            employeeName ||
+            ""
+        )
+        .trim()
+    );
+}
+
+
+
+/* =====================================================
+   FULL TASK TEXT
+===================================================== */
+
+function fullGoalText(goal)
+{
+    return (
+
+        textValue(
+            goal &&
+            goal.Description
+        )
+
+        ||
+
+        textValue(
+            goal &&
+            goal.Goal_Name
+        )
+    );
+}
+
+
+
+/* =====================================================
+   INITIAL EMPLOYEE LIST
+
+   Only Self Rating Submitted records appear.
+===================================================== */
+
+async function loadInitial()
+{
+    state.reviews =
+        await getAll(
+            REPORTS.review
+        );
+
+
+    var seen =
+        {};
+
+
+    var employees =
+        [];
+
+
+    state.reviews.forEach(
+        function(review)
+        {
+            if(
+                getStage(
+                    review
+                )
+                !==
+                STAGE.SELF_SUBMITTED
+            )
+            {
+                return;
+            }
+
+
+            var id =
+                lookupId(
+                    review.Employee_Lookup
+                );
+
+
+            if(
+                !id ||
+                seen[id]
+            )
+            {
+                return;
+            }
+
+
+            seen[id] =
+                true;
+
+
+            employees.push(
+                {
+                    ID:
+                        id,
+
+                    name:
+                        textValue(
+                            review.Employee_Lookup
+                        )
+                        ||
+                        id,
+
+                    department:
+                        textValue(
+                            review.Department
+                        )
+                }
+            );
+        }
+    );
+
+
+    state.employees =
+        employees;
+
+
+    var html =
+        '<option value="">-- Select --</option>';
+
+
+    employees.forEach(
+        function(employee)
+        {
+            html +=
+                '<option value="' +
+                esc(
+                    employee.ID
+                ) +
+                '">' +
+                esc(
+                    employee.name
+                ) +
+                '</option>';
+        }
+    );
+
+
+    document
+        .getElementById(
+            "empSelect"
+        )
+        .innerHTML =
+        html;
+
+
+    if(
+        employees.length
+    )
+    {
+        setStatus(
+            "Ready.",
+            true
+        );
+    }
+    else
+    {
+        setStatus(
+            "No Self Rating submissions waiting for review.",
+            false
+        );
+    }
+}
+
+
+
+/* =====================================================
+   FIND EMPLOYEE
+===================================================== */
+
+function findEmployee(id)
+{
+    return (
+
+        state.employees.find(
+            function(employee)
+            {
+                return (
+                    String(
+                        employee.ID
+                    )
+                    ===
+                    String(id)
+                );
+            }
+        )
+
+        ||
+
+        null
+    );
+}
+
+
+
+/* =====================================================
+   FIND REVIEW
+===================================================== */
+
+function findReview(
+    employeeId,
+    quarter,
+    year
+)
+{
+    return (
+
+        state.reviews.find(
+            function(review)
+            {
+                return (
+
+                    lookupId(
+                        review.Employee_Lookup
+                    )
+                    ===
+                    String(
+                        employeeId
+                    )
+
+                    &&
+
+                    same(
+                        review.Quarter,
+                        quarter
+                    )
+
+                    &&
+
+                    same(
+                        review.Year_field,
+                        year
+                    )
+
+                    &&
+
+                    getStage(
+                        review
+                    )
+                    ===
+                    STAGE.SELF_SUBMITTED
+                );
+            }
+        )
+
+        ||
+
+        null
+    );
+}
+
+
+
+/* =====================================================
+   LOAD APPRAISAL
+===================================================== */
+
+async function loadAppraisal()
+{
+    var employeeId =
+        document
+            .getElementById(
+                "empSelect"
+            )
+            .value;
+
+
+    var quarter =
+        document
+            .getElementById(
+                "quarterSelect"
+            )
+            .value;
+
+
+    var year =
+        document
+            .getElementById(
+                "yearSelect"
+            )
+            .value;
+
+
+    var employee =
+        findEmployee(
+            employeeId
+        );
+
+
+    if(!employee)
+    {
+        showModal(
+            "Department Head Review",
+            "Select an employee.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    var review =
+        findReview(
+            employeeId,
+            quarter,
+            year
+        );
+
+
+    if(!review)
+    {
+        showModal(
+            "Department Head Review",
+            "No Self Rating submission was found for this Employee / Quarter / Year.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    setStatus(
+        "Loading appraisal...",
+        null
+    );
+
+
+    try
+    {
+        var results =
+            await Promise.all(
+                [
+                    getAll(
+                        REPORTS.kra
+                    ),
+
+                    getAll(
+                        REPORTS.goal
+                    ),
+
+                    getAll(
+                        REPORTS.competency
+                    )
+                ]
+            );
+
+
+        var kras =
+            results[0]
+            .filter(
+                function(kra)
+                {
+                    return (
+
+                        employeeFieldMatches(
+                            kra.Employee_Name,
+                            employeeId,
+                            employee.name
+                        )
+
+                        &&
+
+                        same(
+                            kra.Quarter,
+                            quarter
+                        )
+
+                        &&
+
+                        same(
+                            kra.Year_field1,
+                            year
+                        )
+                    );
+                }
+            );
+
+
+        var allGoals =
+            results[1];
+
+
+        var attributes =
+            results[2]
+            .filter(
+                function(attribute)
+                {
+                    return (
+
+                        employeeFieldMatches(
+                            attribute.Employee_Name1,
+                            employeeId,
+                            employee.name
+                        )
+
+                        &&
+
+                        same(
+                            attribute.Quarter,
+                            quarter
+                        )
+
+                        &&
+
+                        same(
+                            attribute.Year_field1,
+                            year
+                        )
+                    );
+                }
+            );
+
+
+        state.review =
+            review;
+
+
+        state.kras =
+            kras.map(
+                function(kra)
+                {
+                    return {
+
+                        kra:
+                            kra,
+
+                        goals:
+                            allGoals.filter(
+                                function(goal)
+                                {
+                                    return (
+                                        lookupId(
+                                            goal.KRA
+                                        )
+                                        ===
+                                        String(
+                                            kra.ID
+                                        )
+                                    );
+                                }
+                            )
+                    };
+                }
+            );
+
+
+        state.competencies =
+            attributes;
+
+
+        /*
+           Read the Performance Settings
+           stored in this Review record.
+
+           If old data is blank:
+           default 80 / 20.
+        */
+
+        state.settings.kraWeight =
+            numberValue(
+                review.KRA_Section_Weight,
+                80
+            );
+
+
+        state.settings.roleWeight =
+            numberValue(
+                review.Role_Attribute_Weight,
+                20
+            );
+
+
+        render();
+
+
+        setStatus(
+            "Loaded.",
+            true
+        );
+    }
+    catch(error)
+    {
+        friendlyError(
+            error,
+            "Appraisal could not be loaded."
+        );
+    }
+}
+
+
+
+/* =====================================================
+   RENDER APPRAISAL
+===================================================== */
+
+function render()
+{
+    document
+        .getElementById(
+            "resultArea"
+        )
+        .classList
+        .remove(
+            "hidden"
+        );
+
+
+    var employee =
+        findEmployee(
+            document
+                .getElementById(
+                    "empSelect"
+                )
+                .value
+        );
+
+
+    document
+        .getElementById(
+            "rvEmployee"
+        )
+        .textContent =
+        employee
+        ?
+        employee.name
+        :
+        "-";
+
+
+    document
+        .getElementById(
+            "rvDepartment"
+        )
+        .textContent =
+        textValue(
+            state.review.Department
+        )
+        ||
+        "-";
+
+
+    document
+        .getElementById(
+            "rvPeriod"
+        )
+        .textContent =
+
+        textValue(
+            state.review.Quarter
+        )
+
+        +
+
+        " / "
+
+        +
+
+        textValue(
+            state.review.Year_field
+        );
+
+
+    document
+        .getElementById(
+            "statusBadge"
+        )
+        .textContent =
+        getStage(
+            state.review
+        );
+
+
+    document
+        .getElementById(
+            "settingKraWeight"
+        )
+        .value =
+        state.settings.kraWeight;
+
+
+    document
+        .getElementById(
+            "settingRoleWeight"
+        )
+        .value =
+        state.settings.roleWeight;
+
+
+    document
+        .getElementById(
+            "rvFac"
+        )
+        .textContent =
+        textValue(
+            state.review.Facilitating_Factors1
+        )
+        ||
+        "-";
+
+
+    document
+        .getElementById(
+            "rvCon"
+        )
+        .textContent =
+        textValue(
+            state.review.Constraining_Factors
+        )
+        ||
+        "-";
+
+
+    document
+        .getElementById(
+            "rvOut"
+        )
+        .textContent =
+        textValue(
+            state.review.Outstanding_Achievement
+        )
+        ||
+        "-";
+
+
+    document
+        .getElementById(
+            "rvLearn"
+        )
+        .textContent =
+        textValue(
+            state.review.My_Learnings
+        )
+        ||
+        "-";
+
+
+    document
+        .getElementById(
+            "apprComments"
+        )
+        .value =
+        textValue(
+            state.review.Appraiser_Comments
+        );
+
+
+    document
+        .getElementById(
+            "rejectBox"
+        )
+        .classList
+        .add(
+            "hidden"
+        );
+
+
+    renderKras();
+
+    renderAttrs();
+
+    settingsChanged();
+
+
+    document
+        .getElementById(
+            "saveBtn"
+        )
+        .disabled =
+        false;
+
+
+    document
+        .getElementById(
+            "rejectBtn"
+        )
+        .disabled =
+        false;
+
+
+    document
+        .getElementById(
+            "approveBtn"
+        )
+        .disabled =
+        false;
+}
+
+
+
+/* =====================================================
+   RENDER KRA / TASK
+===================================================== */
+
+function renderKras()
+{
+    var area =
+        document.getElementById(
+            "kraArea"
+        );
+
+
+    if(
+        !state.kras.length
+    )
+    {
+        area.innerHTML =
+            '<div style="color:var(--muted)">No KRA records found.</div>';
+
+        return;
+    }
+
+
+    var html =
+        "";
+
+
+    state.kras.forEach(
+        function(pair)
+        {
+            html +=
+                '<div class="kra-card">';
+
+
+            html +=
+                '<div class="goal-head">' +
+
+                esc(
+                    textValue(
+                        pair.kra.KRA_Name
+                    )
+                )
+
+                +
+
+                ' <span style="font-weight:400;color:var(--muted)">' +
+
+                '- KRA Weight ' +
+
+                esc(
+                    textValue(
+                        pair.kra.Weightage
+                    )
+                )
+
+                +
+
+                '%</span>' +
+
+                '</div>';
+
+
+            html +=
+                '<div style="font-size:12px;color:var(--muted)">' +
+
+                esc(
+                    textValue(
+                        pair.kra.Description
+                    )
+                )
+
+                +
+
+                '</div>';
+
+
+            pair.goals.forEach(
+                function(goal)
+                {
+                    html +=
+                        '<div class="goal-grid">';
+
+
+                    html +=
+                        '<div>' +
+                        '<label>Task</label>' +
+                        '<div class="readonly">' +
+                        esc(
+                            fullGoalText(
+                                goal
+                            )
+                        ) +
+                        '</div>' +
+                        '</div>';
+
+
+                    html +=
+                        '<div>' +
+                        '<label>Achievement</label>' +
+                        '<div class="readonly">' +
+                        esc(
+                            textValue(
+                                goal.Achievement
+                            )
+                            ||
+                            "-"
+                        ) +
+                        '</div>' +
+                        '</div>';
+
+
+                    html +=
+                        '<div>' +
+                        '<label>Weight</label>' +
+                        '<div class="readonly">' +
+                        esc(
+                            textValue(
+                                goal.Weightage
+                            )
+                        ) +
+                        '%</div>' +
+                        '</div>';
+
+
+                    html +=
+                        '<div>' +
+                        '<label>Self Rating</label>' +
+                        '<div class="readonly">' +
+                        esc(
+                            textValue(
+                                goal.Self_Rating
+                            )
+                        ) +
+                        '</div>' +
+                        '</div>';
+
+
+                    html +=
+                        '<div>' +
+                        '<label>Head Rating (0-5)</label>' +
+                        '<input ' +
+                        'type="number" ' +
+                        'min="0" ' +
+                        'max="5" ' +
+                        'step="0.1" ' +
+                        'value="' +
+                        esc(
+                            textValue(
+                                goal.Appraiser_Rating
+                            )
+                        ) +
+                        '" ' +
+                        'oninput="headGoalChanged(\'' +
+                        goal.ID +
+                        '\',this.value)">' +
+                        '</div>';
+
+
+                    html +=
+                        '</div>';
+                }
+            );
+
+
+            html +=
+                '</div>';
+        }
+    );
+
+
+    area.innerHTML =
+        html;
+}
+
+
+
+/* =====================================================
+   RENDER ROLE ATTRIBUTES
+===================================================== */
+
+function renderAttrs()
+{
+    var area =
+        document.getElementById(
+            "attrArea"
+        );
+
+
+    if(
+        !state.competencies.length
+    )
+    {
+        area.innerHTML =
+            '<div style="color:var(--muted)">No Role Attribute records found.</div>';
+
+        return;
+    }
+
+
+    var html =
+        "";
+
+
+    state.competencies.forEach(
+        function(attribute)
+        {
+            html +=
+                '<div class="attr-grid">';
+
+
+            html +=
+                '<div>' +
+                '<label>Attribute</label>' +
+                '<div class="readonly">' +
+                esc(
+                    textValue(
+                        attribute.Attribute_Name
+                    )
+                ) +
+                '</div>' +
+                '</div>';
+
+
+            html +=
+                '<div>' +
+                '<label>Weight</label>' +
+                '<div class="readonly">' +
+                esc(
+                    textValue(
+                        attribute.Weightage
+                    )
+                ) +
+                '%</div>' +
+                '</div>';
+
+
+            html +=
+                '<div>' +
+                '<label>Self Rating</label>' +
+                '<div class="readonly">' +
+                esc(
+                    textValue(
+                        attribute.Rating
+                    )
+                ) +
+                '</div>' +
+                '</div>';
+
+
+            html +=
+                '<div>' +
+                '<label>Head Rating (0-5)</label>' +
+                '<input ' +
+                'type="number" ' +
+                'min="0" ' +
+                'max="5" ' +
+                'step="0.1" ' +
+                'value="' +
+                esc(
+                    textValue(
+                        attribute.Appraiser_Rating
+                    )
+                ) +
+                '" ' +
+                'oninput="headAttrChanged(\'' +
+                attribute.ID +
+                '\',this.value)">' +
+                '</div>';
+
+
+            html +=
+                '</div>';
+        }
+    );
+
+
+    area.innerHTML =
+        html;
+}
+
+
+
+/* =====================================================
+   HEAD RATING CHANGED
+===================================================== */
+
+function headGoalChanged(
+    id,
+    value
+)
+{
+    state.kras.forEach(
+        function(pair)
+        {
+            var goal =
+                pair.goals.find(
+                    function(item)
+                    {
+                        return (
+                            String(
+                                item.ID
+                            )
+                            ===
+                            String(id)
+                        );
+                    }
+                );
+
+
+            if(goal)
+            {
+                goal.Appraiser_Rating =
+                    value;
+            }
+        }
+    );
+
+
+    renderSummary();
+}
+
+
+
+function headAttrChanged(
+    id,
+    value
+)
+{
+    var attribute =
+        state.competencies.find(
+            function(item)
+            {
+                return (
+                    String(
+                        item.ID
+                    )
+                    ===
+                    String(id)
+                );
+            }
+        );
+
+
+    if(attribute)
+    {
+        attribute.Appraiser_Rating =
+            value;
+    }
+
+
+    renderSummary();
+}
+
+
+
+/* =====================================================
+   PERFORMANCE SETTINGS
+===================================================== */
+
+function settingsChanged()
+{
+    state.settings.kraWeight =
+        numberValue(
+            document
+                .getElementById(
+                    "settingKraWeight"
+                )
+                .value,
+            0
+        );
+
+
+    state.settings.roleWeight =
+        numberValue(
+            document
+                .getElementById(
+                    "settingRoleWeight"
+                )
+                .value,
+            0
+        );
+
+
+    var total =
+        state.settings.kraWeight
+        +
+        state.settings.roleWeight;
+
+
+    document
+        .getElementById(
+            "settingTotal"
+        )
+        .value =
+        round2(
+            total
+        );
+
+
+    var badge =
+        document.getElementById(
+            "settingsBadge"
+        );
+
+
+    badge.textContent =
+        round2(
+            total
+        )
+        +
+        "%";
+
+
+    badge.className =
+        "badge "
+        +
+        (
+            Math.abs(
+                total - 100
+            )
+            <
+            .01
+            ?
+            "ok"
+            :
+            "bad"
+        );
+
+
+    renderSummary();
+}
+
+
+
+/* =====================================================
+   WEIGHTED RATING
+===================================================== */
+
+function weightedRating(
+    items,
+    ratingGetter,
+    weightGetter
+)
+{
+    var weightedSum =
+        0;
+
+
+    var totalWeight =
+        0;
+
+
+    var count =
+        0;
+
+
+    var plainSum =
+        0;
+
+
+    items.forEach(
+        function(item)
+        {
+            var rating =
+                numberValue(
+                    ratingGetter(
+                        item
+                    ),
+                    NaN
+                );
+
+
+            if(
+                !Number.isFinite(
+                    rating
+                )
+            )
+            {
+                return;
+            }
+
+
+            var weight =
+                Math.max(
+                    0,
+                    numberValue(
+                        weightGetter(
+                            item
+                        ),
+                        0
+                    )
+                );
+
+
+            plainSum +=
+                rating;
+
+
+            count++;
+
+
+            if(weight > 0)
+            {
+                weightedSum +=
+                    rating *
+                    weight;
+
+
+                totalWeight +=
+                    weight;
+            }
+        }
+    );
+
+
+    if(totalWeight > 0)
+    {
+        return (
+            weightedSum /
+            totalWeight
+        );
+    }
+
+
+    if(count > 0)
+    {
+        return (
+            plainSum /
+            count
+        );
+    }
+
+
+    return 0;
+}
+
+
+
+/* =====================================================
+   CALCULATE ALL SCORES
+===================================================== */
+
+function calculateScores()
+{
+    var goals =
+        [];
+
+
+    state.kras.forEach(
+        function(pair)
+        {
+            pair.goals.forEach(
+                function(goal)
+                {
+                    goals.push(
+                        goal
+                    );
+                }
+            );
+        }
+    );
+
+
+    /*
+       Employee Self scores
+    */
+
+    var selfKra =
+        weightedRating(
+            goals,
+
+            function(goal)
+            {
+                return goal.Self_Rating;
+            },
+
+            function(goal)
+            {
+                return goal.Weightage;
+            }
+        );
+
+
+    var selfRole =
+        weightedRating(
+            state.competencies,
+
+            function(attribute)
+            {
+                return attribute.Rating;
+            },
+
+            function(attribute)
+            {
+                return attribute.Weightage;
+            }
+        );
+
+
+    /*
+       Department Head scores
+    */
+
+    var headKra =
+        weightedRating(
+            goals,
+
+            function(goal)
+            {
+                return goal.Appraiser_Rating;
+            },
+
+            function(goal)
+            {
+                return goal.Weightage;
+            }
+        );
+
+
+    var headRole =
+        weightedRating(
+            state.competencies,
+
+            function(attribute)
+            {
+                return attribute.Appraiser_Rating;
+            },
+
+            function(attribute)
+            {
+                return attribute.Weightage;
+            }
+        );
+
+
+    /*
+       Performance Settings calculation
+
+       Example:
+       KRA 80
+       Role 20
+    */
+
+    var kraWeight =
+        state.settings.kraWeight;
+
+
+    var roleWeight =
+        state.settings.roleWeight;
+
+
+    var total =
+        kraWeight +
+        roleWeight;
+
+
+    var selfOverall =
+        total > 0
+        ?
+        (
+            (
+                selfKra *
+                kraWeight
+            )
+            +
+            (
+                selfRole *
+                roleWeight
+            )
+        )
+        /
+        total
+        :
+        0;
+
+
+    var headOverall =
+        total > 0
+        ?
+        (
+            (
+                headKra *
+                kraWeight
+            )
+            +
+            (
+                headRole *
+                roleWeight
+            )
+        )
+        /
+        total
+        :
+        0;
+
+
+    /*
+       Final KRA result:
+       Self vs Head
+    */
+
+    var finalKra =
+        (
+            (
+                selfKra *
+                FINAL_SELF_WEIGHT
+            )
+            +
+            (
+                headKra *
+                FINAL_HEAD_WEIGHT
+            )
+        )
+        /
+        (
+            FINAL_SELF_WEIGHT +
+            FINAL_HEAD_WEIGHT
+        );
+
+
+    /*
+       Final Role result
+    */
+
+    var finalRole =
+        (
+            (
+                selfRole *
+                FINAL_SELF_WEIGHT
+            )
+            +
+            (
+                headRole *
+                FINAL_HEAD_WEIGHT
+            )
+        )
+        /
+        (
+            FINAL_SELF_WEIGHT +
+            FINAL_HEAD_WEIGHT
+        );
+
+
+    /*
+       Final Appraisal Result
+
+       Separate from the
+       KRA / Role Performance Settings.
+    */
+
+    var finalOverall =
+        (
+            (
+                selfOverall *
+                FINAL_SELF_WEIGHT
+            )
+            +
+            (
+                headOverall *
+                FINAL_HEAD_WEIGHT
+            )
+        )
+        /
+        (
+            FINAL_SELF_WEIGHT +
+            FINAL_HEAD_WEIGHT
+        );
+
+
+    return {
+
+        selfKra:
+            round2(
+                selfKra
+            ),
+
+        selfRole:
+            round2(
+                selfRole
+            ),
+
+        selfOverall:
+            round2(
+                selfOverall
+            ),
+
+        headKra:
+            round2(
+                headKra
+            ),
+
+        headRole:
+            round2(
+                headRole
+            ),
+
+        headOverall:
+            round2(
+                headOverall
+            ),
+
+        finalKra:
+            round2(
+                finalKra
+            ),
+
+        finalRole:
+            round2(
+                finalRole
+            ),
+
+        finalOverall:
+            round2(
+                finalOverall
+            )
+    };
+}
+
+
+
+/* =====================================================
+   RENDER SUMMARY
+===================================================== */
+
+function renderSummary()
+{
+    if(!state.review)
+    {
+        return;
+    }
+
+
+    var scores =
+        calculateScores();
+
+
+    document
+        .getElementById(
+            "sumSelfKra"
+        )
+        .textContent =
+        scores.selfKra
+        .toFixed(2);
+
+
+    document
+        .getElementById(
+            "sumHeadKra"
+        )
+        .textContent =
+        scores.headKra
+        .toFixed(2);
+
+
+    document
+        .getElementById(
+            "sumFinalKra"
+        )
+        .textContent =
+        scores.finalKra
+        .toFixed(2);
+
+
+    document
+        .getElementById(
+            "sumSelfRole"
+        )
+        .textContent =
+        scores.selfRole
+        .toFixed(2);
+
+
+    document
+        .getElementById(
+            "sumHeadRole"
+        )
+        .textContent =
+        scores.headRole
+        .toFixed(2);
+
+
+    document
+        .getElementById(
+            "sumFinalRole"
+        )
+        .textContent =
+        scores.finalRole
+        .toFixed(2);
+
+
+    document
+        .getElementById(
+            "sumSelfOverall"
+        )
+        .textContent =
+        scores.selfOverall
+        .toFixed(2);
+
+
+    document
+        .getElementById(
+            "sumHeadOverall"
+        )
+        .textContent =
+        scores.headOverall
+        .toFixed(2);
+
+
+    document
+        .getElementById(
+            "sumFinalOverall"
+        )
+        .textContent =
+        scores.finalOverall
+        .toFixed(2);
+}
+
+
+
+/* =====================================================
+   VALIDATE SETTINGS
+===================================================== */
+
+function validateSettings()
+{
+    return (
+
+        Math.abs(
+            (
+                state.settings.kraWeight
+                +
+                state.settings.roleWeight
+            )
+            -
+            100
+        )
+        <
+        .01
+    );
+}
+
+
+
+/* =====================================================
+   VALIDATE HEAD RATINGS
+===================================================== */
+
+function validateHeadRatings()
+{
+    var pairIndex;
+    var goalIndex;
+
+
+    for(
+        pairIndex = 0;
+        pairIndex < state.kras.length;
+        pairIndex++
+    )
+    {
+        var pair =
+            state.kras[
+                pairIndex
+            ];
+
+
+        for(
+            goalIndex = 0;
+            goalIndex < pair.goals.length;
+            goalIndex++
+        )
+        {
+            if(
+                !ratingValid(
+                    pair.goals[
+                        goalIndex
+                    ]
+                    .Appraiser_Rating
+                )
+            )
+            {
+                return (
+                    "Enter Department Head Rating from 0 to 5 for every task."
+                );
+            }
+        }
+    }
+
+
+    for(
+        var i = 0;
+        i < state.competencies.length;
+        i++
+    )
+    {
+        if(
+            !ratingValid(
+                state.competencies[
+                    i
+                ]
+                .Appraiser_Rating
+            )
+        )
+        {
+            return (
+                "Enter Department Head Rating from 0 to 5 for every Role Attribute."
+            );
+        }
+    }
+
+
+    return "";
+}
+
+
+
+/* =====================================================
+   RATING LABEL
+===================================================== */
+
+function ratingLabel(value)
+{
+    var rating =
+        numberValue(
+            value,
+            0
+        );
+
+
+    if(rating >= 4.5)
+    {
+        return "Outstanding";
+    }
+
+
+    if(rating >= 4)
+    {
+        return "Exceeds Expectations";
+    }
+
+
+    if(rating >= 3)
+    {
+        return "Meets Expectations";
+    }
+
+
+    if(rating >= 2)
+    {
+        return "Needs Improvement";
+    }
+
+
+    return "Unacceptable";
+}
+
+
+
+/* =====================================================
+   SAVE ALL HEAD RATINGS
+===================================================== */
+
+async function saveAllRatings()
+{
+    var updates =
+        [];
+
+
+    state.kras.forEach(
+        function(pair)
+        {
+            pair.goals.forEach(
+                function(goal)
+                {
+                    var value =
+                        String(
+                            textValue(
+                                goal.Appraiser_Rating
+                            )
+                        )
+                        .trim();
+
+
+                    if(
+                        value !== ""
+                    )
+                    {
+                        updates.push(
+                            updateRecord(
+                                REPORTS.goal,
+                                goal.ID,
+                                {
+                                    Appraiser_Rating:
+                                        num(
+                                            goal.Appraiser_Rating,
+                                            2
+                                        )
+                                }
+                            )
+                        );
+                    }
+                }
+            );
+        }
+    );
+
+
+    state.competencies.forEach(
+        function(attribute)
+        {
+            var value =
+                String(
+                    textValue(
+                        attribute.Appraiser_Rating
+                    )
+                )
+                .trim();
+
+
+            if(
+                value !== ""
+            )
+            {
+                updates.push(
+                    updateRecord(
+                        REPORTS.competency,
+                        attribute.ID,
+                        {
+                            Appraiser_Rating:
+                                num(
+                                    attribute.Appraiser_Rating,
+                                    2
+                                )
+                        }
+                    )
+                );
+            }
+        }
+    );
+
+
+    await Promise.all(
+        updates
+    );
+}
+
+
+
+/* =====================================================
+   BUILD REVIEW SCORE FIELDS
+
+   IMPORTANT:
+
+   Department Head approval does NOT use:
+
+   Status = Head Approved
+
+   because your Creator Status field rejects it.
+
+   Correct:
+
+   Status        = Submitted for Approval
+   Process_Stage = Head Approved
+===================================================== */
+
+function reviewScoreFields(
+    processStage
+)
+{
+    var scores =
+        calculateScores();
+
+
+    var fields =
+    {
+        Appraiser_Comments:
+            document
+                .getElementById(
+                    "apprComments"
+                )
+                .value,
+
+        KRA_Section_Weight:
+            num(
+                state.settings.kraWeight
+            ),
+
+        Role_Attribute_Weight:
+            num(
+                state.settings.roleWeight
+            ),
+
+        Self_KRA_Rating:
+            num(
+                scores.selfKra
+            ),
+
+        Self_Role_Rating:
+            num(
+                scores.selfRole
+            ),
+
+        Self_Overall_Rating:
+            num(
+                scores.selfOverall
+            ),
+
+        Head_KRA_Rating:
+            num(
+                scores.headKra
+            ),
+
+        Head_Role_Rating:
+            num(
+                scores.headRole
+            ),
+
+        Head_Overall_Rating:
+            num(
+                scores.headOverall
+            ),
+
+        Final_Appraisal_Rating:
+            num(
+                scores.finalOverall
+            ),
+
+        /*
+           Existing old score fields
+           are kept synchronized.
+        */
+
+        KRA_Score:
+            num(
+                scores.finalKra
+            ),
+
+        Competency_Score:
+            num(
+                scores.finalRole
+            ),
+
+        Final_Score:
+            num(
+                scores.finalOverall
+            ),
+
+        Overall_Rating:
+            ratingLabel(
+                scores.finalOverall
+            )
+    };
+
+
+    if(processStage)
+    {
+        fields.Process_Stage =
+            processStage;
+
+
+        /*
+           CRITICAL FIX
+
+           At Department Head approval stage:
+
+           Status remains
+           Submitted for Approval.
+
+           Process_Stage moves to
+           Head Approved.
+
+           HR can therefore find this record
+           for final approval.
+        */
+
+        if(
+            processStage ===
+            STAGE.HEAD_APPROVED
+        )
+        {
+            fields.Status =
+                "Submitted for Approval";
+        }
+
+
+        if(
+            processStage ===
+            STAGE.APPROVED
+        )
+        {
+            fields.Status =
+                "Approved";
+        }
+    }
+
+
+    return fields;
+}
+
+
+
+/* =====================================================
+   SAVE DRAFT
+===================================================== */
+
+async function saveDraft()
+{
+    if(!state.review)
+    {
+        showModal(
+            "Department Head Review",
+            "Load an appraisal first.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if(
+        !validateSettings()
+    )
+    {
+        showModal(
+            "Performance Settings",
+            "KRA Section Weight + Role Attribute Weight must equal exactly 100%.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    setBusy(
+        "saveBtn",
+        true,
+        "Saving..."
+    );
+
+
+    try
+    {
+        await saveAllRatings();
+
+
+        await updateRecord(
+
+            REPORTS.review,
+
+            state.review.ID,
+
+            reviewScoreFields(
+                null
+            )
+        );
+
+
+        showModal(
+            "Draft saved",
+            "Department Head ratings and Performance Settings were saved successfully.",
+            "success"
+        );
+
+
+        setStatus(
+            "Draft saved.",
+            true
+        );
+    }
+    catch(error)
+    {
+        friendlyError(
+            error,
+            "Draft could not be saved."
+        );
+    }
+    finally
+    {
+        setBusy(
+            "saveBtn",
+            false
+        );
+    }
+}
+
+
+
+/* =====================================================
+   APPROVE APPRAISAL
+===================================================== */
+
+async function approveAppraisal()
+{
+    if(!state.review)
+    {
+        showModal(
+            "Department Head Review",
+            "Load an appraisal first.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    /*
+       KRA Section Weight +
+       Role Attribute Weight = 100
+    */
+
+    if(
+        !validateSettings()
+    )
+    {
+        showModal(
+            "Performance Settings",
+            "KRA Section Weight + Role Attribute Weight must equal exactly 100%.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    /*
+       Every task and role attribute
+       must have a Department Head rating
+       from 0 to 5.
+    */
+
+    var problem =
+        validateHeadRatings();
+
+
+    if(problem)
+    {
+        showModal(
+            "Department Head Review",
+            problem,
+            "error"
+        );
+
+        return;
+    }
+
+
+    setBusy(
+        "approveBtn",
+        true,
+        "Approving..."
+    );
+
+
+    setStatus(
+        "Approving appraisal...",
+        null
+    );
+
+
+    try
+    {
+        /*
+           1. Save Head ratings
+        */
+
+        await saveAllRatings();
+
+
+        /*
+           2. Calculate everything automatically
+        */
+
+        var fields =
+            reviewScoreFields(
+                STAGE.HEAD_APPROVED
+            );
+
+
+        console.log(
+            "HEAD APPROVAL REVIEW DATA:",
+            fields
+        );
+
+
+        /*
+           3. Update Review
+
+           Status:
+           Submitted for Approval
+
+           Process_Stage:
+           Head Approved
+        */
+
+        await updateRecord(
+
+            REPORTS.review,
+
+            state.review.ID,
+
+            fields
+        );
+
+
+        /*
+           Keep browser state synchronized.
+        */
+
+        state.review.Status =
+            "Submitted for Approval";
+
+
+        state.review.Process_Stage =
+            STAGE.HEAD_APPROVED;
+
+
+        showModal(
+            "Department Head approval complete",
+            "The appraisal has been approved by the Department Head and sent to the next approval stage.\n\nSelf Overall Rating: " +
+            calculateScores()
+                .selfOverall
+                .toFixed(2)
+            +
+            " / 5\nDepartment Head Overall Rating: " +
+            calculateScores()
+                .headOverall
+                .toFixed(2)
+            +
+            " / 5\nFinal Appraisal Rating: " +
+            calculateScores()
+                .finalOverall
+                .toFixed(2)
+            +
+            " / 5",
+            "success"
+        );
+
+
+        setStatus(
+            "Department Head approved - sent for final approval.",
+            true
+        );
+
+
+        document
+            .getElementById(
+                "statusBadge"
+            )
+            .textContent =
+            STAGE.HEAD_APPROVED;
+
+
+        /*
+           Lock the page after approval.
+        */
+
+        lockReview();
+    }
+    catch(error)
+    {
+        friendlyError(
+            error,
+            "Approval could not be completed."
+        );
+
+
+        setStatus(
+            "Approval failed.",
+            false
+        );
+    }
+    finally
+    {
+        setBusy(
+            "approveBtn",
+            false
+        );
+    }
+}
+
+
+
+/* =====================================================
+   LOCK REVIEW AFTER APPROVAL
+===================================================== */
+
+function lockReview()
+{
+    document
+        .getElementById(
+            "saveBtn"
+        )
+        .disabled =
+        true;
+
+
+    document
+        .getElementById(
+            "rejectBtn"
+        )
+        .disabled =
+        true;
+
+
+    document
+        .getElementById(
+            "approveBtn"
+        )
+        .disabled =
+        true;
+
+
+    document
+        .getElementById(
+            "settingKraWeight"
+        )
+        .disabled =
+        true;
+
+
+    document
+        .getElementById(
+            "settingRoleWeight"
+        )
+        .disabled =
+        true;
+
+
+    document
+        .getElementById(
+            "apprComments"
+        )
+        .disabled =
+        true;
+
+
+    var ratingInputs =
+        document.querySelectorAll(
+            '#kraArea input[type="number"],' +
+            '#attrArea input[type="number"]'
+        );
+
+
+    for(
+        var i = 0;
+        i < ratingInputs.length;
+        i++
+    )
+    {
+        ratingInputs[i]
+            .disabled =
+            true;
+    }
+}
+
+
+
+/* =====================================================
+   REJECT APPRAISAL
+===================================================== */
+
+function rejectAppraisal()
+{
+    if(!state.review)
+    {
+        showModal(
+            "Department Head Review",
+            "Load an appraisal first.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    var box =
+        document.getElementById(
+            "rejectBox"
+        );
+
+
+    /*
+       First click:
+       show rejection comments.
+    */
+
+    if(
+        box.classList.contains(
+            "hidden"
+        )
+    )
+    {
+        box.classList.remove(
+            "hidden"
+        );
+
+
+        document
+            .getElementById(
+                "rejectComments"
+            )
+            .focus();
+
+
+        showModal(
+            "Reject appraisal",
+            "Enter the rejection reason, then click Reject again.",
+            "error"
+        );
+
+
+        return;
+    }
+
+
+    var comments =
+        document
+            .getElementById(
+                "rejectComments"
+            )
+            .value
+            .trim();
+
+
+    if(!comments)
+    {
+        showModal(
+            "Reject appraisal",
+            "Enter rejection comments.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    setBusy(
+        "rejectBtn",
+        true,
+        "Rejecting..."
+    );
+
+
+    updateRecord(
+
+        REPORTS.review,
+
+        state.review.ID,
+
+        {
+            Status:
+                "Rejected",
+
+            Process_Stage:
+                STAGE.REJECTED,
+
+            Rejection_Comments:
+                comments,
+
+            Appraiser_Comments:
+                document
+                    .getElementById(
+                        "apprComments"
+                    )
+                    .value
+        }
+    )
+
+    .then(
+        function()
+        {
+            state.review.Status =
+                "Rejected";
+
+
+            state.review.Process_Stage =
+                STAGE.REJECTED;
+
+
+            showModal(
+                "Appraisal rejected",
+                "The appraisal was rejected successfully. The submitted Self Rating remains locked.",
+                "success"
+            );
+
+
+            setStatus(
+                "Appraisal rejected.",
+                true
+            );
+
+
+            document
+                .getElementById(
+                    "statusBadge"
+                )
+                .textContent =
+                STAGE.REJECTED;
+
+
+            lockReview();
+        }
+    )
+
+    .catch(
+        function(error)
+        {
+            friendlyError(
+                error,
+                "Rejection could not be completed."
+            );
+        }
+    )
+
+    .finally(
+        function()
+        {
+            setBusy(
+                "rejectBtn",
+                false
+            );
+        }
+    );
+}
+
+
+
+/* =====================================================
+   INITIALIZE CREATOR
+===================================================== */
+
+if(
+    window.ZOHO &&
+    ZOHO.CREATOR
+)
+{
+    ZOHO.CREATOR.init()
+
+    .then(
+        function()
+        {
+            return loadInitial();
+        }
+    )
+
+    .catch(
+        function(error)
+        {
+            friendlyError(
+                error,
+                "Creator widget could not be initialized."
+            );
+
+
+            setStatus(
+                "Initialization failed.",
+                false
+            );
+        }
+    );
+}
+else
+{
+    showModal(
+        "Creator SDK not detected",
+        "Open this page inside Zoho Creator.",
+        "error"
+    );
+}
+
 </script>
+
+
 </body>
+
 </html>

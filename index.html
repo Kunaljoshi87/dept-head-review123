@@ -107,7 +107,7 @@ const STAGE={KRA_SUBMITTED:'KRA Submitted',SELF_SUBMITTED:'Self Rating Submitted
 const FINAL_SELF_WEIGHT=50;
 const FINAL_HEAD_WEIGHT=50;
 const state={reviews:[],employees:[],review:null,kras:[],competencies:[],settings:{kraWeight:80,roleWeight:20}};
-console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-12-FINAL-FLOW-01');
+console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-13-STRICT-STAGE-01');
 
 function showModal(title,message,type){document.getElementById('modalTitle').textContent=title||'Message';document.getElementById('modalMessage').textContent=message||'';document.getElementById('modalBox').className='modal'+(type?' '+type:'');document.getElementById('modalBackdrop').classList.remove('hidden')}
 function closeModal(){document.getElementById('modalBackdrop').classList.add('hidden')}
@@ -128,61 +128,13 @@ function setBusy(id,busy,text){const b=document.getElementById(id);if(!b)return;
 
 function getAll(reportName){let page=1,out=[];function next(){return ZOHO.CREATOR.API.getAllRecords({reportName,page,pageSize:200}).then(r=>{const rows=r&&r.data?r.data:[];out=out.concat(rows);if(rows.length<200||page>=50)return out;page++;return next()}).catch(err=>{if(noData(err))return out;throw err})}return next()}
 function updateRecord(reportName,id,fields){const wrapped={reportName,id:String(id),data:{data:fields}};return ZOHO.CREATOR.API.updateRecord(wrapped).then(r=>{if(r&&r.code==3000)return r.data;throw r}).catch(err=>{const t=errorText(err);if(t.indexOf('2945')>=0||t.indexOf('EXTRA_KEY_FOUND_IN_JSON')>=0){return ZOHO.CREATOR.API.updateRecord({reportName,id:String(id),data:fields}).then(r=>{if(r&&r.code==3000)return r.data;throw r})}throw err})}
-function getStage(review)
-{
-    if(!review)
-    {
-        return "";
-    }
-
-    var stage =
-        textValue(
-            review.Process_Stage
-        ).trim();
-
-    /*
-       Process_Stage is the ONLY workflow source.
-       Never assume Self Rating from Status.
-    */
-    if(stage === STAGE.KRA_SUBMITTED)
-    {
-        return STAGE.KRA_SUBMITTED;
-    }
-
-    if(stage === STAGE.SELF_SUBMITTED)
-    {
-        return STAGE.SELF_SUBMITTED;
-    }
-
-    if(stage === STAGE.HEAD_APPROVED)
-    {
-        return STAGE.HEAD_APPROVED;
-    }
-
-    if(stage === STAGE.APPROVED)
-    {
-        return STAGE.APPROVED;
-    }
-
-    if(stage === STAGE.REJECTED)
-    {
-        return STAGE.REJECTED;
-    }
-
-    /*
-       Old records / missing Process_Stage:
-       DO NOT send them to Department Head.
-    */
-    return "";
-}
-
-  
-  function employeeFieldMatches(field,empId,empName){const id=lookupId(field);if(id&&String(id)===String(empId))return true;return textValue(field).trim()===String(empName||'').trim()}
+function getStage(review){if(!review)return'';const stage=textValue(review.Process_Stage).trim();if(stage===STAGE.KRA_SUBMITTED)return STAGE.KRA_SUBMITTED;if(stage===STAGE.SELF_SUBMITTED)return STAGE.SELF_SUBMITTED;if(stage===STAGE.HEAD_APPROVED)return STAGE.HEAD_APPROVED;if(stage===STAGE.APPROVED)return STAGE.APPROVED;if(stage===STAGE.REJECTED)return STAGE.REJECTED;return''}
+function employeeFieldMatches(field,empId,empName){const id=lookupId(field);if(id&&String(id)===String(empId))return true;return textValue(field).trim()===String(empName||'').trim()}
 function fullGoalText(goal){return textValue(goal&&goal.Description)||textValue(goal&&goal.Goal_Name)}
 
-async function loadInitial(){state.reviews=await getAll(REPORTS.review);const seen={},emps=[];state.reviews.forEach(r=>{if(getStage(r)!==STAGE.SELF_SUBMITTED)return;const id=lookupId(r.Employee_Lookup);if(!id||seen[id])return;seen[id]=true;emps.push({ID:id,name:textValue(r.Employee_Lookup)||id,department:textValue(r.Department)})});state.employees=emps;document.getElementById('empSelect').innerHTML='<option value="">-- Select --</option>'+emps.map(e=>'<option value="'+esc(e.ID)+'">'+esc(e.name)+'</option>').join('');setStatus(emps.length?'Ready.':'No Self Rating submissions waiting for review.',!!emps.length)}
+async function loadInitial(){state.reviews=await getAll(REPORTS.review);const seen={},emps=[];state.reviews.forEach(r=>{const stage=textValue(r.Process_Stage).trim();if(stage!==STAGE.SELF_SUBMITTED)return;const id=lookupId(r.Employee_Lookup);if(!id||seen[id])return;seen[id]=true;emps.push({ID:id,name:textValue(r.Employee_Lookup)||id,department:textValue(r.Department)})});state.employees=emps;document.getElementById('empSelect').innerHTML='<option value="">-- Select --</option>'+emps.map(e=>'<option value="'+esc(e.ID)+'">'+esc(e.name)+'</option>').join('');setStatus(emps.length?'Ready.':'No Self Rating submissions waiting for review.',true)}
 function findEmployee(id){return state.employees.find(e=>String(e.ID)===String(id))||null}
-function findReview(empId,q,y){return state.reviews.find(r=>lookupId(r.Employee_Lookup)===String(empId)&&same(r.Quarter,q)&&same(r.Year_field,y)&&getStage(r)===STAGE.SELF_SUBMITTED)||null}
+function findReview(empId,q,y){return state.reviews.find(r=>lookupId(r.Employee_Lookup)===String(empId)&&same(r.Quarter,q)&&same(r.Year_field,y)&&textValue(r.Process_Stage).trim()===STAGE.SELF_SUBMITTED)||null}
 
 async function loadAppraisal(){const empId=document.getElementById('empSelect').value,q=document.getElementById('quarterSelect').value,y=document.getElementById('yearSelect').value,emp=findEmployee(empId);if(!emp){showModal('Department Head Review','Select an employee.','error');return}const review=findReview(empId,q,y);if(!review){showModal('Department Head Review','No Self Rating submission was found for this Employee / Quarter / Year.','error');return}setStatus('Loading appraisal...',null);try{const results=await Promise.all([getAll(REPORTS.kra),getAll(REPORTS.goal),getAll(REPORTS.competency)]);const kras=results[0].filter(k=>employeeFieldMatches(k.Employee_Name,empId,emp.name)&&same(k.Quarter,q)&&same(k.Year_field1,y)),goals=results[1],attrs=results[2].filter(a=>employeeFieldMatches(a.Employee_Name1,empId,emp.name)&&same(a.Quarter,q)&&same(a.Year_field1,y));state.review=review;state.kras=kras.map(k=>({kra:k,goals:goals.filter(g=>lookupId(g.KRA)===String(k.ID))}));state.competencies=attrs;state.settings.kraWeight=numberValue(review.KRA_Section_Weight,80);state.settings.roleWeight=numberValue(review.Role_Attribute_Weight,20);render();setStatus('Loaded.',true)}catch(err){friendlyError(err,'Appraisal could not be loaded.')}}
 

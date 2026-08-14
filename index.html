@@ -138,7 +138,7 @@ const STAGE={READY_SELF:'Ready for Self Rating',KRA_SUBMITTED:'Ready for Self Ra
 const FINAL_SELF_WEIGHT=50;
 const FINAL_HEAD_WEIGHT=50;
 const state={reviews:[],employees:[],review:null,kras:[],competencies:[],training:[],settings:{kraWeight:80,roleWeight:20}};
-console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-14-FINAL-STAGE-LOCK-01');
+console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-14-AUTO-OVERALL-FIX-02');
 
 function showModal(title,message,type){document.getElementById('modalTitle').textContent=title||'Message';document.getElementById('modalMessage').textContent=message||'';document.getElementById('modalBox').className='modal'+(type?' '+type:'');document.getElementById('modalBackdrop').classList.remove('hidden')}
 function closeModal(){document.getElementById('modalBackdrop').classList.add('hidden')}
@@ -148,7 +148,7 @@ function esc(v){return(v===null||v===undefined?'':String(v)).replace(/[&<>\"]/g,
 function textValue(v){if(v===null||v===undefined)return'';if(typeof v==='object')return String(v.display_value||v.zc_display_value||v.value||'');return String(v)}
 function lookupId(v){if(!v)return'';if(typeof v==='object')return String(v.ID||v.id||'');return String(v)}
 function same(a,b){return textValue(a).trim()===String(b).trim()}
-function numberValue(v,fallback=0){const n=Number(String(v===null||v===undefined?'':v).replace(/,/g,'').replace(/%/g,'').trim());return Number.isFinite(n)?n:fallback}
+function numberValue(v,fallback=0){const raw=String(v===null||v===undefined?'':v).replace(/,/g,'').replace(/%/g,'').trim();if(raw==='')return fallback;const n=Number(raw);return Number.isFinite(n)?n:fallback}function optionalNumber(v){const raw=String(v===null||v===undefined?'':v).replace(/,/g,'').replace(/%/g,'').trim();if(raw==='')return null;const n=Number(raw);return Number.isFinite(n)?n:null}
 function num(v,places=2){const n=numberValue(v,0),f=Math.pow(10,places);return String(Math.round((n+Number.EPSILON)*f)/f)}
 function round2(v){return Math.round((numberValue(v,0)+Number.EPSILON)*100)/100}
 function ratingValid(v){const n=numberValue(v,NaN);return Number.isFinite(n)&&n>=0&&n<=5}
@@ -467,8 +467,7 @@ async function loadAppraisal(){
     state.kras=pairs;
     state.competencies=attrs;
     state.training=training;
-    state.settings.kraWeight=numberValue(review.KRA_Section_Weight,80);
-    state.settings.roleWeight=numberValue(review.Role_Attribute_Weight,20);
+    resolvePerformanceWeights();
 
     render();
     setStatus('Loaded.',true);
@@ -486,6 +485,7 @@ function headGoalChanged(id,v){for(const p of state.kras){const g=p.goals.find(x
 function headAttrChanged(id,v){const a=state.competencies.find(x=>String(x.ID)===String(id));if(a)a.Appraiser_Rating=v;renderSummary()}
 function settingsChanged(){state.settings.kraWeight=numberValue(document.getElementById('settingKraWeight').value,0);state.settings.roleWeight=numberValue(document.getElementById('settingRoleWeight').value,0);const total=state.settings.kraWeight+state.settings.roleWeight;document.getElementById('settingTotal').value=round2(total);const b=document.getElementById('settingsBadge');b.textContent=round2(total)+'%';b.className='badge '+(Math.abs(total-100)<.01?'ok':'bad');renderSummary()}
 function weightedRating(items,ratingGetter,weightGetter){let sum=0,weight=0,count=0,plain=0;items.forEach(item=>{const r=numberValue(ratingGetter(item),NaN);if(!Number.isFinite(r))return;const w=Math.max(0,numberValue(weightGetter(item),0));plain+=r;count++;if(w>0){sum+=r*w;weight+=w}});if(weight>0)return sum/weight;return count?plain/count:0}
+function resolvePerformanceWeights(){const reviewKra=optionalNumber(state.review&&state.review.KRA_Section_Weight),reviewRole=optionalNumber(state.review&&state.review.Role_Attribute_Weight),reviewTotal=(reviewKra===null?0:reviewKra)+(reviewRole===null?0:reviewRole);let kraWeight=reviewKra,roleWeight=reviewRole,source='Review';if(reviewKra===null||reviewRole===null||reviewTotal<=0){const kraTotal=state.kras.reduce((sum,p)=>sum+Math.max(0,numberValue(p&&p.kra&&p.kra.Weightage,0)),0);const roleTotal=state.competencies.reduce((sum,a)=>sum+Math.max(0,numberValue(a&&a.Weightage,0)),0);if(kraTotal+roleTotal>0){kraWeight=kraTotal;roleWeight=roleTotal;source='KRA/Role records';}else{kraWeight=80;roleWeight=20;source='default 80/20';}}const total=numberValue(kraWeight,0)+numberValue(roleWeight,0);if(total>0&&Math.abs(total-100)>0.01){kraWeight=numberValue(kraWeight,0)*100/total;roleWeight=numberValue(roleWeight,0)*100/total;source=source+' normalized';}state.settings.kraWeight=round2(kraWeight);state.settings.roleWeight=round2(roleWeight);console.log('PERFORMANCE WEIGHTS AUTO RESOLVED:',{kraWeight:state.settings.kraWeight,roleWeight:state.settings.roleWeight,source:source});return state.settings}
 function calculateScores(){const goals=[];state.kras.forEach(p=>p.goals.forEach(g=>goals.push(g)));const selfKra=weightedRating(goals,g=>g.Self_Rating,g=>g.Weightage),headKra=weightedRating(goals,g=>g.Appraiser_Rating,g=>g.Weightage),selfRole=weightedRating(state.competencies,a=>a.Rating,a=>a.Weightage),headRole=weightedRating(state.competencies,a=>a.Appraiser_Rating,a=>a.Weightage),kw=state.settings.kraWeight,rw=state.settings.roleWeight,total=kw+rw,selfOverall=total>0?(selfKra*kw+selfRole*rw)/total:0,headOverall=total>0?(headKra*kw+headRole*rw)/total:0,finalKra=(selfKra*FINAL_SELF_WEIGHT+headKra*FINAL_HEAD_WEIGHT)/(FINAL_SELF_WEIGHT+FINAL_HEAD_WEIGHT),finalRole=(selfRole*FINAL_SELF_WEIGHT+headRole*FINAL_HEAD_WEIGHT)/(FINAL_SELF_WEIGHT+FINAL_HEAD_WEIGHT),finalOverall=(selfOverall*FINAL_SELF_WEIGHT+headOverall*FINAL_HEAD_WEIGHT)/(FINAL_SELF_WEIGHT+FINAL_HEAD_WEIGHT);return{selfKra:round2(selfKra),headKra:round2(headKra),selfRole:round2(selfRole),headRole:round2(headRole),selfOverall:round2(selfOverall),headOverall:round2(headOverall),finalKra:round2(finalKra),finalRole:round2(finalRole),finalOverall:round2(finalOverall)}}
 function renderSummary(){if(!state.review)return;const s=calculateScores();document.getElementById('sumSelfKra').textContent=s.selfKra.toFixed(2);document.getElementById('sumHeadKra').textContent=s.headKra.toFixed(2);document.getElementById('sumFinalKra').textContent=s.finalKra.toFixed(2);document.getElementById('sumSelfRole').textContent=s.selfRole.toFixed(2);document.getElementById('sumHeadRole').textContent=s.headRole.toFixed(2);document.getElementById('sumFinalRole').textContent=s.finalRole.toFixed(2);document.getElementById('sumSelfOverall').textContent=s.selfOverall.toFixed(2);document.getElementById('sumHeadOverall').textContent=s.headOverall.toFixed(2);document.getElementById('sumFinalOverall').textContent=s.finalOverall.toFixed(2)}
 function validateSettings(){return Math.abs((state.settings.kraWeight+state.settings.roleWeight)-100)<.01}

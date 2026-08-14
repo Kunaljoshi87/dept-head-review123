@@ -107,7 +107,7 @@ const STAGE={KRA_SUBMITTED:'KRA Submitted',SELF_SUBMITTED:'Self Rating Submitted
 const FINAL_SELF_WEIGHT=50;
 const FINAL_HEAD_WEIGHT=50;
 const state={reviews:[],employees:[],review:null,kras:[],competencies:[],settings:{kraWeight:80,roleWeight:20}};
-console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-13-REVIEW-REPORT-FIX-04');
+console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-14-STAGE-MIGRATION-05');
 
 function showModal(title,message,type){document.getElementById('modalTitle').textContent=title||'Message';document.getElementById('modalMessage').textContent=message||'';document.getElementById('modalBox').className='modal'+(type?' '+type:'');document.getElementById('modalBackdrop').classList.remove('hidden')}
 function closeModal(){document.getElementById('modalBackdrop').classList.add('hidden')}
@@ -143,13 +143,39 @@ function employeeMasterName(record){
   return String(value);
 }
 
-function hasSubmittedSelfScore(review){
-  if(!review)return false;
-  const values=[review.Self_Overall_Rating,review.Self_KRA_Rating,review.Self_Role_Rating];
-  return values.some(function(value){return String(textValue(value)).trim()!=='';});
+function hasCompleteSelfSubmission(kraPairs,attributes){
+  if(!Array.isArray(kraPairs)||!kraPairs.length)return false;
+
+  let goalCount=0;
+
+  for(const pair of kraPairs){
+    const goals=Array.isArray(pair.goals)?pair.goals:[];
+
+    for(const goal of goals){
+      goalCount++;
+
+      const achievement=String(textValue(goal.Achievement)).trim();
+      const selfRating=String(textValue(goal.Self_Rating)).trim();
+
+      if(!achievement)return false;
+      if(selfRating==='')return false;
+      if(!ratingValid(selfRating))return false;
+    }
+  }
+
+  if(goalCount===0)return false;
+  if(!Array.isArray(attributes)||!attributes.length)return false;
+
+  for(const attribute of attributes){
+    const rating=String(textValue(attribute.Rating)).trim();
+    if(rating==='')return false;
+    if(!ratingValid(rating))return false;
+  }
+
+  return true;
 }
 
-async function resolveHeadStage(review){
+async function resolveHeadStage(review,kraPairs,attributes){
   if(!review||!review.ID)return'';
 
   const visible=textValue(review.Process_Stage).trim();
@@ -158,13 +184,16 @@ async function resolveHeadStage(review){
     return visible;
   }
 
-  // Process_Stage may not be visible in Review_Report. Resolve it by criteria.
+  // Process_Stage may exist in Creator but not be visible in Review_Report.
   const candidates=[STAGE.SELF_SUBMITTED,STAGE.HEAD_APPROVED,STAGE.APPROVED,STAGE.REJECTED,STAGE.KRA_SUBMITTED];
+
   for(let i=0;i<candidates.length;i++){
     const candidate=candidates[i];
+
     try{
       const criteria='(ID == '+String(review.ID)+' && Process_Stage == "'+candidate+'")';
       const rows=await getAll(REPORTS.review,criteria);
+
       if(rows.length){
         review._resolvedStage=candidate;
         return candidate;
@@ -175,15 +204,46 @@ async function resolveHeadStage(review){
     }
   }
 
-  // Safe migration for older records: final Self Rating stores Self_* score fields,
-  // while a Self Rating draft does not. This avoids promoting an ordinary draft.
-  if(textValue(review.Status).trim()==='Submitted for Approval'&&hasSubmittedSelfScore(review)){
+  /*
+     MIGRATION FOR OLD RECORDS
+
+     Do NOT guess from Status alone.
+
+     We only treat an old record as Self Rating Submitted when the
+     actual Goal and Role Attribute records prove that the employee
+     completed the entire Self Rating:
+
+     - every task has Achievement
+     - every task has Self Rating 0-5
+     - every Role Attribute has Self Rating 0-5
+  */
+  if(
+    textValue(review.Status).trim()==='Submitted for Approval'
+    &&
+    hasCompleteSelfSubmission(kraPairs,attributes)
+  ){
     review._resolvedStage=STAGE.SELF_SUBMITTED;
+    review.Process_Stage=STAGE.SELF_SUBMITTED;
+
     try{
-      await updateRecord(REPORTS.review,review.ID,{Status:'Submitted for Approval',Process_Stage:STAGE.SELF_SUBMITTED});
+      await updateRecord(
+        REPORTS.review,
+        review.ID,
+        {
+          Status:'Submitted for Approval',
+          Process_Stage:STAGE.SELF_SUBMITTED
+        }
+      );
+
+      console.log('Old Review record migrated to Self Rating Submitted:',review.ID);
     }catch(repairError){
-      console.warn('Self Rating was detected, but Process_Stage could not be repaired.',repairError);
+      /*
+         Still allow this completed Self Rating in the current session.
+         The console keeps the technical repair error for admin/debugging.
+      */
+      console.warn('Self Rating is complete, but Process_Stage could not be repaired.',repairError);
     }
+
     return STAGE.SELF_SUBMITTED;
   }
 
@@ -347,7 +407,7 @@ async function loadAppraisal(){
     return;
   }
 
-  setStatus('Checking Review Report...',null);
+  setStatus('Checking Review Report and Self Rating data...',null);
 
   try{
     const review=await findReview(empId,q,y);
@@ -362,21 +422,11 @@ async function loadAppraisal(){
       return;
     }
 
-    const stage=await resolveHeadStage(review);
-
-    if(stage!==STAGE.SELF_SUBMITTED){
-      let stageText=stage||textValue(review.Process_Stage).trim()||'Not set';
-      showModal(
-        'Self Rating not submitted',
-        'A Review record exists for this employee, but it is not ready for Department Head Review.\n\nCurrent Process Stage: '+stageText+'\n\nThe employee must click Submit Self Rating first.',
-        'error'
-      );
-      setStatus('Review found, but Self Rating is not submitted.',false);
-      return;
-    }
-
-    setStatus('Loading appraisal...',null);
-
+    /*
+       Load the actual KRA / Goal / Role Attribute records BEFORE deciding
+       the stage. This lets old records with a blank Process_Stage be
+       migrated safely from their completed Self Rating data.
+    */
     const results=await Promise.all([
       getAll(REPORTS.kra),
       getAll(REPORTS.goal),
@@ -397,8 +447,7 @@ async function loadAppraisal(){
         && same(attribute.Year_field1,y);
     });
 
-    state.review=review;
-    state.kras=kras.map(function(kra){
+    const pairs=kras.map(function(kra){
       return {
         kra:kra,
         goals:goals.filter(function(goal){
@@ -406,6 +455,30 @@ async function loadAppraisal(){
         })
       };
     });
+
+    const stage=await resolveHeadStage(review,pairs,attrs);
+
+    if(stage!==STAGE.SELF_SUBMITTED){
+      let stageText=stage||textValue(review.Process_Stage).trim()||'Not set';
+
+      let reason='The employee must click Submit Self Rating first.';
+
+      if(stageText==='Not set'){
+        reason='Process_Stage is blank and the saved task/role ratings do not prove that a complete Self Rating was submitted. Open Employee Performance, load this Quarter/Year, complete every Achievement and every Self Rating, then click Submit Self Rating.';
+      }
+
+      showModal(
+        'Self Rating not submitted',
+        'A Review record exists for this employee, but it is not ready for Department Head Review.\n\nCurrent Process Stage: '+stageText+'\n\n'+reason,
+        'error'
+      );
+
+      setStatus('Review found, but Self Rating is not submitted.',false);
+      return;
+    }
+
+    state.review=review;
+    state.kras=pairs;
     state.competencies=attrs;
     state.settings.kraWeight=numberValue(review.KRA_Section_Weight,80);
     state.settings.roleWeight=numberValue(review.Role_Attribute_Weight,20);

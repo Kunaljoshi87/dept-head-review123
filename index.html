@@ -102,12 +102,12 @@
 </div>
 
 <script>
-const REPORTS={review:'Review_Report',kra:'KRA_Report',goal:'Goal_Report',competency:'Competency_Report'};
+const REPORTS={review:'Review_Report',kra:'KRA_Report',goal:'Goal_Report',competency:'Competency_Report',employees:'All_Employees'};
 const STAGE={KRA_SUBMITTED:'KRA Submitted',SELF_SUBMITTED:'Self Rating Submitted',HEAD_APPROVED:'Head Approved',APPROVED:'Approved',REJECTED:'Rejected'};
 const FINAL_SELF_WEIGHT=50;
 const FINAL_HEAD_WEIGHT=50;
 const state={reviews:[],employees:[],review:null,kras:[],competencies:[],settings:{kraWeight:80,roleWeight:20}};
-console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-13-WORKING-FINAL-02');
+console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-13-REVIEW-REPORT-FIX-04');
 
 function showModal(title,message,type){document.getElementById('modalTitle').textContent=title||'Message';document.getElementById('modalMessage').textContent=message||'';document.getElementById('modalBox').className='modal'+(type?' '+type:'');document.getElementById('modalBackdrop').classList.remove('hidden')}
 function closeModal(){document.getElementById('modalBackdrop').classList.add('hidden')}
@@ -132,25 +132,291 @@ function getStage(review){if(!review)return'';const resolved=String(review._reso
 function employeeFieldMatches(field,empId,empName){const id=lookupId(field);if(id&&String(id)===String(empId))return true;return textValue(field).trim()===String(empName||'').trim()}
 function fullGoalText(goal){return textValue(goal&&goal.Description)||textValue(goal&&goal.Goal_Name)}
 
-async function loadInitial(){
-  const criteria='(Process_Stage == "'+STAGE.SELF_SUBMITTED+'")';
-  state.reviews=await getAll(REPORTS.review,criteria);
-  state.reviews.forEach(function(r){r._resolvedStage=STAGE.SELF_SUBMITTED});
-  const seen={},emps=[];
-  state.reviews.forEach(function(r){
-    const id=lookupId(r.Employee_Lookup);
-    if(!id||seen[id])return;
-    seen[id]=true;
-    emps.push({ID:id,name:textValue(r.Employee_Lookup)||id,department:textValue(r.Department)});
-  });
-  state.employees=emps;
-  document.getElementById('empSelect').innerHTML='<option value="">-- Select --</option>'+emps.map(function(e){return '<option value="'+esc(e.ID)+'">'+esc(e.name)+'</option>'}).join('');
-  setStatus(emps.length?'Ready.':'No Self Rating submissions waiting for review.',true);
+function employeeMasterName(record){
+  if(!record)return'';
+  const value=record.Employee_Name;
+  if(!value)return String(record.ID||'');
+  if(typeof value==='string')return value;
+  if(typeof value==='object'){
+    return String(value.display_value||value.zc_display_value||[value.prefix,value.first_name,value.last_name,value.suffix].filter(Boolean).join(' ')||record.ID||'');
+  }
+  return String(value);
 }
-function findEmployee(id){return state.employees.find(e=>String(e.ID)===String(id))||null}
-function findReview(empId,q,y){const review=state.reviews.find(r=>lookupId(r.Employee_Lookup)===String(empId)&&same(r.Quarter,q)&&same(r.Year_field,y))||null;if(review)review._resolvedStage=STAGE.SELF_SUBMITTED;return review}
 
-async function loadAppraisal(){const empId=document.getElementById('empSelect').value,q=document.getElementById('quarterSelect').value,y=document.getElementById('yearSelect').value,emp=findEmployee(empId);if(!emp){showModal('Department Head Review','Select an employee.','error');return}const review=findReview(empId,q,y);if(!review){showModal('Department Head Review','No Self Rating submission was found for this Employee / Quarter / Year.','error');return}setStatus('Loading appraisal...',null);try{const results=await Promise.all([getAll(REPORTS.kra),getAll(REPORTS.goal),getAll(REPORTS.competency)]);const kras=results[0].filter(k=>employeeFieldMatches(k.Employee_Name,empId,emp.name)&&same(k.Quarter,q)&&same(k.Year_field1,y)),goals=results[1],attrs=results[2].filter(a=>employeeFieldMatches(a.Employee_Name1,empId,emp.name)&&same(a.Quarter,q)&&same(a.Year_field1,y));state.review=review;state.kras=kras.map(k=>({kra:k,goals:goals.filter(g=>lookupId(g.KRA)===String(k.ID))}));state.competencies=attrs;state.settings.kraWeight=numberValue(review.KRA_Section_Weight,80);state.settings.roleWeight=numberValue(review.Role_Attribute_Weight,20);render();setStatus('Loaded.',true)}catch(err){friendlyError(err,'Appraisal could not be loaded.')}}
+function hasSubmittedSelfScore(review){
+  if(!review)return false;
+  const values=[review.Self_Overall_Rating,review.Self_KRA_Rating,review.Self_Role_Rating];
+  return values.some(function(value){return String(textValue(value)).trim()!=='';});
+}
+
+async function resolveHeadStage(review){
+  if(!review||!review.ID)return'';
+
+  const visible=textValue(review.Process_Stage).trim();
+  if(visible===STAGE.KRA_SUBMITTED||visible===STAGE.SELF_SUBMITTED||visible===STAGE.HEAD_APPROVED||visible===STAGE.APPROVED||visible===STAGE.REJECTED){
+    review._resolvedStage=visible;
+    return visible;
+  }
+
+  // Process_Stage may not be visible in Review_Report. Resolve it by criteria.
+  const candidates=[STAGE.SELF_SUBMITTED,STAGE.HEAD_APPROVED,STAGE.APPROVED,STAGE.REJECTED,STAGE.KRA_SUBMITTED];
+  for(let i=0;i<candidates.length;i++){
+    const candidate=candidates[i];
+    try{
+      const criteria='(ID == '+String(review.ID)+' && Process_Stage == "'+candidate+'")';
+      const rows=await getAll(REPORTS.review,criteria);
+      if(rows.length){
+        review._resolvedStage=candidate;
+        return candidate;
+      }
+    }catch(stageError){
+      console.warn('Could not resolve Process_Stage by criteria.',stageError);
+      break;
+    }
+  }
+
+  // Safe migration for older records: final Self Rating stores Self_* score fields,
+  // while a Self Rating draft does not. This avoids promoting an ordinary draft.
+  if(textValue(review.Status).trim()==='Submitted for Approval'&&hasSubmittedSelfScore(review)){
+    review._resolvedStage=STAGE.SELF_SUBMITTED;
+    try{
+      await updateRecord(REPORTS.review,review.ID,{Status:'Submitted for Approval',Process_Stage:STAGE.SELF_SUBMITTED});
+    }catch(repairError){
+      console.warn('Self Rating was detected, but Process_Stage could not be repaired.',repairError);
+    }
+    return STAGE.SELF_SUBMITTED;
+  }
+
+  review._resolvedStage='';
+  return'';
+}
+
+async function loadInitial(){
+  setStatus('Loading employees from Review Report...',null);
+
+  try{
+    const result=await Promise.all([
+      getAll(REPORTS.review),
+      getAll(REPORTS.employees)
+    ]);
+
+    const allReviews=result[0]||[];
+    const masterRows=result[1]||[];
+    const employeeMap={};
+
+    masterRows.forEach(function(record){
+      employeeMap[String(record.ID)]={
+        ID:String(record.ID),
+        name:employeeMasterName(record),
+        department:textValue(record.Department)
+      };
+    });
+
+    /*
+      IMPORTANT:
+      The employee dropdown is built from Review_Report records.
+      We DO NOT filter by Process_Stage here.
+
+      This means an employee name cannot disappear only because
+      Process_Stage is blank, hidden from the report, or still at
+      KRA Submitted.
+
+      The stage is validated only after the user clicks
+      LOAD APPRAISAL.
+    */
+    state.reviews=allReviews;
+
+    const seen={};
+    const employees=[];
+
+    allReviews.forEach(function(review){
+      const id=lookupId(review.Employee_Lookup);
+      if(!id||seen[id])return;
+
+      seen[id]=true;
+      const master=employeeMap[String(id)]||null;
+      const lookupName=textValue(review.Employee_Lookup).trim();
+
+      employees.push({
+        ID:String(id),
+        name:(master&&master.name)||lookupName||String(id),
+        department:textValue(review.Department)||(master&&master.department)||''
+      });
+    });
+
+    /*
+      Fallback:
+      If Employee_Lookup is not visible in Review_Report, Creator's
+      getAllRecords response may not contain it. In that case, use
+      All_Employees and ask Review_Report whether each employee has
+      at least one Review record by criteria.
+    */
+    if(employees.length===0 && masterRows.length>0){
+      setStatus('Review Report loaded. Resolving employee lookups...',null);
+
+      for(let i=0;i<masterRows.length;i++){
+        const masterRecord=masterRows[i];
+        const employeeId=String(masterRecord.ID);
+
+        try{
+          const rows=await getAll(
+            REPORTS.review,
+            '(Employee_Lookup == '+employeeId+')'
+          );
+
+          if(rows.length>0){
+            employees.push({
+              ID:employeeId,
+              name:employeeMasterName(masterRecord),
+              department:textValue(masterRecord.Department)
+            });
+          }
+        }catch(employeeLookupError){
+          console.warn('Could not check Review Report for employee '+employeeId,employeeLookupError);
+        }
+      }
+    }
+
+    state.employees=employees;
+
+    document.getElementById('empSelect').innerHTML=
+      '<option value="">-- Select --</option>'+
+      employees.map(function(employee){
+        return '<option value="'+esc(employee.ID)+'">'+esc(employee.name)+'</option>';
+      }).join('');
+
+    if(employees.length){
+      setStatus(
+        employees.length+' employee(s) found in Review Report. Select Quarter/Year and load appraisal.',
+        true
+      );
+    }else if(allReviews.length===0){
+      setStatus('Review_Report has no records.',false);
+      showModal(
+        'Review Report is empty',
+        'No records were returned from Review_Report. First confirm that the Review form contains records and that Review_Report is the correct report link name.',
+        'error'
+      );
+    }else{
+      setStatus('Review records exist, but Employee_Lookup could not be resolved.',false);
+      showModal(
+        'Employee field not available',
+        'Review_Report returned records, but Employee_Lookup could not be resolved. Make Employee_Lookup visible in Review_Report, then refresh this page.',
+        'error'
+      );
+    }
+  }catch(err){
+    friendlyError(err,'Employees could not be loaded from Review Report.');
+    setStatus('Review Report loading failed.',false);
+  }
+}
+
+function findEmployee(id){
+  return state.employees.find(function(employee){return String(employee.ID)===String(id);})||null;
+}
+
+async function findReview(empId,q,y){
+  /* First try the Review_Report rows already loaded. */
+  const local=state.reviews.find(function(record){
+    return lookupId(record.Employee_Lookup)===String(empId)
+      && same(record.Quarter,q)
+      && same(record.Year_field,y);
+  })||null;
+
+  if(local)return local;
+
+  /*
+    Fallback: if Employee_Lookup / Quarter / Year are not visible in
+    Review_Report's returned columns, let Creator filter them server-side.
+  */
+  const safeQuarter=String(q).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+  const yearText=String(y).trim();
+  const criteria='(Employee_Lookup == '+String(empId)+' && Quarter == "'+safeQuarter+'" && Year_field == '+yearText+')';
+  const rows=await getAll(REPORTS.review,criteria);
+  return rows.length?rows[0]:null;
+}
+
+async function loadAppraisal(){
+  const empId=document.getElementById('empSelect').value;
+  const q=document.getElementById('quarterSelect').value;
+  const y=document.getElementById('yearSelect').value;
+  const emp=findEmployee(empId);
+
+  if(!emp){
+    showModal('Department Head Review','Select an employee.','error');
+    return;
+  }
+
+  setStatus('Checking Review Report...',null);
+
+  try{
+    const review=await findReview(empId,q,y);
+
+    if(!review){
+      showModal(
+        'Department Head Review',
+        'No Review record was found for '+emp.name+' / '+q+' / '+y+'.',
+        'error'
+      );
+      setStatus('No matching Review record.',false);
+      return;
+    }
+
+    const stage=await resolveHeadStage(review);
+
+    if(stage!==STAGE.SELF_SUBMITTED){
+      let stageText=stage||textValue(review.Process_Stage).trim()||'Not set';
+      showModal(
+        'Self Rating not submitted',
+        'A Review record exists for this employee, but it is not ready for Department Head Review.\n\nCurrent Process Stage: '+stageText+'\n\nThe employee must click Submit Self Rating first.',
+        'error'
+      );
+      setStatus('Review found, but Self Rating is not submitted.',false);
+      return;
+    }
+
+    setStatus('Loading appraisal...',null);
+
+    const results=await Promise.all([
+      getAll(REPORTS.kra),
+      getAll(REPORTS.goal),
+      getAll(REPORTS.competency)
+    ]);
+
+    const kras=results[0].filter(function(kra){
+      return employeeFieldMatches(kra.Employee_Name,empId,emp.name)
+        && same(kra.Quarter,q)
+        && same(kra.Year_field1,y);
+    });
+
+    const goals=results[1];
+
+    const attrs=results[2].filter(function(attribute){
+      return employeeFieldMatches(attribute.Employee_Name1,empId,emp.name)
+        && same(attribute.Quarter,q)
+        && same(attribute.Year_field1,y);
+    });
+
+    state.review=review;
+    state.kras=kras.map(function(kra){
+      return {
+        kra:kra,
+        goals:goals.filter(function(goal){
+          return lookupId(goal.KRA)===String(kra.ID);
+        })
+      };
+    });
+    state.competencies=attrs;
+    state.settings.kraWeight=numberValue(review.KRA_Section_Weight,80);
+    state.settings.roleWeight=numberValue(review.Role_Attribute_Weight,20);
+
+    render();
+    setStatus('Loaded.',true);
+  }catch(err){
+    friendlyError(err,'Appraisal could not be loaded from Review Report.');
+    setStatus('Load failed.',false);
+  }
+}
 
 function render(){document.getElementById('resultArea').classList.remove('hidden');const emp=findEmployee(document.getElementById('empSelect').value);document.getElementById('rvEmployee').textContent=emp?emp.name:'-';document.getElementById('rvDepartment').textContent=textValue(state.review.Department)||'-';document.getElementById('rvPeriod').textContent=textValue(state.review.Quarter)+' / '+textValue(state.review.Year_field);document.getElementById('statusBadge').textContent=getStage(state.review);document.getElementById('settingKraWeight').value=state.settings.kraWeight;document.getElementById('settingRoleWeight').value=state.settings.roleWeight;document.getElementById('rvFac').textContent=textValue(state.review.Facilitating_Factors1)||'-';document.getElementById('rvCon').textContent=textValue(state.review.Constraining_Factors)||'-';document.getElementById('rvOut').textContent=textValue(state.review.Outstanding_Achievement)||'-';document.getElementById('rvLearn').textContent=textValue(state.review.My_Learnings)||'-';document.getElementById('apprComments').value=textValue(state.review.Appraiser_Comments);document.getElementById('rejectBox').classList.add('hidden');renderKras();renderAttrs();settingsChanged();document.getElementById('saveBtn').disabled=false;document.getElementById('rejectBtn').disabled=false;document.getElementById('approveBtn').disabled=false}
 

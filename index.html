@@ -138,7 +138,7 @@ const STAGE={READY_SELF:'Ready for Self Rating',KRA_SUBMITTED:'Ready for Self Ra
 const FINAL_SELF_WEIGHT=50;
 const FINAL_HEAD_WEIGHT=50;
 const state={reviews:[],employees:[],review:null,kras:[],competencies:[],training:[],settings:{kraWeight:80,roleWeight:20}};
-console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-14-CALCULATION-LOCK-FIX-01');
+console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-14-STAGE-SERVER-FIX-02');
 
 function showModal(title,message,type){document.getElementById('modalTitle').textContent=title||'Message';document.getElementById('modalMessage').textContent=message||'';document.getElementById('modalBox').className='modal'+(type?' '+type:'');document.getElementById('modalBackdrop').classList.remove('hidden')}
 function closeModal(){document.getElementById('modalBackdrop').classList.add('hidden')}
@@ -334,6 +334,16 @@ async function loadInitial(){
       getAll(REPORTS.employees)
     ]);
     const reviews=(result[0]||[]).slice().sort(idCompareDesc);
+
+    // IMPORTANT: these rows were returned by a server-side criteria
+    // Process_Stage == Self Rating Submitted. Even if Process_Stage is
+    // hidden/not returned by Review_Report, the server already confirmed
+    // the stage. Keep that confirmation in memory.
+    reviews.forEach(function(r){
+      r._resolvedStage=STAGE.SELF_SUBMITTED;
+      if(!textValue(r.Process_Stage).trim())r.Process_Stage=STAGE.SELF_SUBMITTED;
+    });
+
     const masters=result[1]||[];
     const map={};
     masters.forEach(r=>map[String(r.ID)]={ID:String(r.ID),name:employeeMasterName(r),department:textValue(r.Department)});
@@ -355,12 +365,31 @@ function findEmployee(id){
 }
 
 async function findReview(empId,q,y){
-  const matches=state.reviews.filter(r=>lookupId(r.Employee_Lookup)===String(empId)&&same(r.Quarter,q)&&same(r.Year_field,y)&&getStage(r)===STAGE.SELF_SUBMITTED).sort(idCompareDesc);
-  if(matches.length)return matches[0];
+  // state.reviews was loaded using server-side Process_Stage criteria, so
+  // every row here is already confirmed as Self Rating Submitted. Do not
+  // require Process_Stage to be visible in the report response.
+  const matches=state.reviews
+    .filter(r=>lookupId(r.Employee_Lookup)===String(empId)&&same(r.Quarter,q)&&same(r.Year_field,y))
+    .sort(idCompareDesc);
+
+  if(matches.length){
+    matches[0]._resolvedStage=STAGE.SELF_SUBMITTED;
+    if(!textValue(matches[0].Process_Stage).trim())matches[0].Process_Stage=STAGE.SELF_SUBMITTED;
+    return matches[0];
+  }
+
   const safeQuarter=criteriaEscape(q),yearText=String(y).trim();
   const criteria='(Employee_Lookup == '+String(empId)+' && Quarter == "'+safeQuarter+'" && Year_field == '+yearText+' && Process_Stage == "'+STAGE.SELF_SUBMITTED+'")';
   const rows=await getAll(REPORTS.review,criteria);
   rows.sort(idCompareDesc);
+
+  if(rows.length){
+    // The criteria itself proves the stage even if Review_Report does not
+    // expose the Process_Stage column in returned data.
+    rows[0]._resolvedStage=STAGE.SELF_SUBMITTED;
+    if(!textValue(rows[0].Process_Stage).trim())rows[0].Process_Stage=STAGE.SELF_SUBMITTED;
+  }
+
   return rows[0]||null;
 }
 
@@ -371,8 +400,12 @@ async function loadAppraisal(){
   try{
     const review=await findReview(empId,q,y);
     if(!review){showModal('Department Head Review','No Review record was found for this Employee / Quarter / Year.','error');return}
-    const stage=getStage(review);
-    if(stage!==STAGE.SELF_SUBMITTED){showModal('Department Head Review','This appraisal is not at Self Rating Submitted stage. Current stage: '+(stage||'Not set')+'.','error');return}
+    // findReview() only returns a record confirmed by the server-side
+    // Self Rating Submitted criteria, so keep that stage even when the
+    // Process_Stage field is not visible in Review_Report.
+    review._resolvedStage=STAGE.SELF_SUBMITTED;
+    if(!textValue(review.Process_Stage).trim())review.Process_Stage=STAGE.SELF_SUBMITTED;
+
     const dataset=await loadExactHeadDataset(review,emp,q,y);
     state.review=review;
     state.kras=dataset.kras.map(k=>({kra:k,goals:dataset.goals.filter(g=>lookupId(g.KRA)===String(k.ID))}));

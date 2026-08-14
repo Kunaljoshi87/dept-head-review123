@@ -138,7 +138,7 @@ const STAGE={READY_SELF:'Ready for Self Rating',KRA_SUBMITTED:'Ready for Self Ra
 const FINAL_SELF_WEIGHT=50;
 const FINAL_HEAD_WEIGHT=50;
 const state={reviews:[],employees:[],review:null,kras:[],competencies:[],training:[],settings:{kraWeight:80,roleWeight:20}};
-console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-14-STAGE-SERVER-FIX-02');
+console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-14-DYNAMIC-OVERALL-FINAL-01');
 
 function showModal(title,message,type){document.getElementById('modalTitle').textContent=title||'Message';document.getElementById('modalMessage').textContent=message||'';document.getElementById('modalBox').className='modal'+(type?' '+type:'');document.getElementById('modalBackdrop').classList.remove('hidden')}
 function closeModal(){document.getElementById('modalBackdrop').classList.add('hidden')}
@@ -538,18 +538,29 @@ function renderSummary(){
   document.getElementById('sumFinalRole').textContent=scoreText(s.finalRole,s.selfRoleComplete&&s.headRoleComplete);
   document.getElementById('sumSelfOverall').textContent=scoreText(s.selfOverall,s.selfComplete);
   document.getElementById('sumHeadOverall').textContent=scoreText(s.headOverall,s.headComplete);
-  document.getElementById('sumFinalOverall').textContent=scoreText(s.finalOverall,s.selfComplete&&s.headComplete);
+  var finalOverallText=scoreText(s.finalOverall,s.selfComplete&&s.headComplete);
+  var inlineFinal=document.getElementById('sumFinalOverallInline');
+  if(inlineFinal)inlineFinal.textContent=finalOverallText;
+  document.getElementById('sumFinalOverall').textContent=(s.finalOverall!==null&&s.selfComplete&&s.headComplete)?(s.finalOverall.toFixed(2)+' / 5 - '+ratingLabel(s.finalOverall)):'—';
 }
 function validateSettings(){return Math.abs((state.settings.kraWeight+state.settings.roleWeight)-100)<.01}
 function validateHeadRatings(){
   if(state.settings.kraWeight>0){
     const goals=[];state.kras.forEach(p=>p.goals.forEach(g=>goals.push(g)));
     if(!goals.length)return 'No KRA tasks were loaded for this appraisal.';
-    for(const g of goals){if(explicitRating(g.Appraiser_Rating)===null)return 'Enter Department Head Rating from 0 to 5 for every task.';}
+    const missingTasks=goals.filter(g=>explicitRating(g.Appraiser_Rating)===null);
+    if(missingTasks.length){
+      const names=missingTasks.slice(0,5).map(g=>fullGoalText(g)||textValue(g.Goal_Name)||('Task '+g.ID));
+      return 'Department Head rating is missing for '+missingTasks.length+' task(s):\n\n- '+names.join('\n- ')+(missingTasks.length>5?'\n- ...':'')+'\n\nEnter a rating from 0 to 5 for every task before submitting.';
+    }
   }
   if(state.settings.roleWeight>0){
     if(!state.competencies.length)return 'No Role Attributes were loaded. Check Competency_Report and Appraisal_Key before submitting.';
-    for(const a of state.competencies){if(explicitRating(a.Appraiser_Rating)===null)return 'Enter Department Head Rating from 0 to 5 for every Role Attribute.';}
+    const missingAttrs=state.competencies.filter(a=>explicitRating(a.Appraiser_Rating)===null);
+    if(missingAttrs.length){
+      const names=missingAttrs.slice(0,10).map(a=>textValue(a.Attribute_Name)||('Attribute '+a.ID));
+      return 'Department Head Role Attribute rating is missing for '+missingAttrs.length+' attribute(s):\n\n- '+names.join('\n- ')+'\n\nEnter a rating from 0 to 5 for every Role Attribute before submitting.';
+    }
   }
   return '';
 }

@@ -134,11 +134,11 @@
 
 <script>
 const REPORTS={review:'Review_Report',kra:'KRA_Report',goal:'Goal_Report',competency:'Competency_Report',employees:'All_Employees',training:'Training_Need_Report'}; // Change training link name here only if your actual report link differs.
-const STAGE={KRA_SUBMITTED:'KRA Submitted',SELF_SUBMITTED:'Self Rating Submitted',HEAD_APPROVED:'Head Approved',APPROVED:'Approved',REJECTED:'Rejected'};
+const STAGE={READY_SELF:'Ready for Self Rating',KRA_SUBMITTED:'Ready for Self Rating',SELF_SUBMITTED:'Self Rating Submitted',HEAD_SUBMITTED:'Department Head Rating Submitted',HEAD_APPROVED:'Department Head Rating Submitted',APPROVED:'Approved',REJECTED:'Rejected'};
 const FINAL_SELF_WEIGHT=50;
 const FINAL_HEAD_WEIGHT=50;
 const state={reviews:[],employees:[],review:null,kras:[],competencies:[],training:[],settings:{kraWeight:80,roleWeight:20}};
-console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-14-HR-PDF-FINAL-06');
+console.log('DEPARTMENT HEAD REVIEW VERSION: 2026-08-14-FINAL-STAGE-LOCK-01');
 
 function showModal(title,message,type){document.getElementById('modalTitle').textContent=title||'Message';document.getElementById('modalMessage').textContent=message||'';document.getElementById('modalBox').className='modal'+(type?' '+type:'');document.getElementById('modalBackdrop').classList.remove('hidden')}
 function closeModal(){document.getElementById('modalBackdrop').classList.add('hidden')}
@@ -160,7 +160,21 @@ function setBusy(id,busy,text){const b=document.getElementById(id);if(!b)return;
 function getAll(reportName,criteria){let page=1,out=[];function next(){const config={reportName:reportName,page:page,pageSize:200};if(criteria)config.criteria=criteria;return ZOHO.CREATOR.API.getAllRecords(config).then(r=>{const rows=r&&r.data?r.data:[];out=out.concat(rows);if(rows.length<200||page>=50)return out;page++;return next()}).catch(err=>{if(noData(err))return out;throw err})}return next()}
 async function getOptional(reportName){try{return await getAll(reportName)}catch(err){console.warn('Optional report unavailable: '+reportName,err);return[]}}
 function updateRecord(reportName,id,fields){const wrapped={reportName,id:String(id),data:{data:fields}};return ZOHO.CREATOR.API.updateRecord(wrapped).then(r=>{if(r&&r.code==3000)return r.data;throw r}).catch(err=>{const t=errorText(err);if(t.indexOf('2945')>=0||t.indexOf('EXTRA_KEY_FOUND_IN_JSON')>=0){return ZOHO.CREATOR.API.updateRecord({reportName,id:String(id),data:fields}).then(r=>{if(r&&r.code==3000)return r.data;throw r})}throw err})}
-function getStage(review){if(!review)return'';const resolved=String(review._resolvedStage||'').trim();if(resolved===STAGE.KRA_SUBMITTED||resolved===STAGE.SELF_SUBMITTED||resolved===STAGE.HEAD_APPROVED||resolved===STAGE.APPROVED||resolved===STAGE.REJECTED)return resolved;const stage=textValue(review.Process_Stage).trim();if(stage===STAGE.KRA_SUBMITTED||stage===STAGE.SELF_SUBMITTED||stage===STAGE.HEAD_APPROVED||stage===STAGE.APPROVED||stage===STAGE.REJECTED)return stage;return''}
+function normalizeStage(value){
+  const s=String(value===null||value===undefined?'':value).trim();
+  if(s===STAGE.READY_SELF||s==='KRA Submitted')return STAGE.READY_SELF;
+  if(s===STAGE.SELF_SUBMITTED)return STAGE.SELF_SUBMITTED;
+  if(s===STAGE.HEAD_SUBMITTED||s==='Head Approved')return STAGE.HEAD_SUBMITTED;
+  if(s===STAGE.APPROVED)return STAGE.APPROVED;
+  if(s===STAGE.REJECTED)return STAGE.REJECTED;
+  return'';
+}
+function getStage(review){
+  if(!review)return'';
+  const resolved=normalizeStage(review._resolvedStage);
+  if(resolved)return resolved;
+  return normalizeStage(textValue(review.Process_Stage));
+}
 function employeeFieldMatches(field,empId,empName){const id=lookupId(field);if(id&&String(id)===String(empId))return true;return textValue(field).trim()===String(empName||'').trim()}
 function fullGoalText(goal){return textValue(goal&&goal.Description)||textValue(goal&&goal.Goal_Name)}
 
@@ -210,25 +224,30 @@ function hasCompleteSelfSubmission(kraPairs,attributes){
 async function resolveHeadStage(review,kraPairs,attributes){
   if(!review||!review.ID)return'';
 
-  const visible=textValue(review.Process_Stage).trim();
-  if(visible===STAGE.KRA_SUBMITTED||visible===STAGE.SELF_SUBMITTED||visible===STAGE.HEAD_APPROVED||visible===STAGE.APPROVED||visible===STAGE.REJECTED){
-    review._resolvedStage=visible;
-    return visible;
-  }
+  let stage=getStage(review);
+  if(stage)return stage;
 
-  // Process_Stage may exist in Creator but not be visible in Review_Report.
-  const candidates=[STAGE.SELF_SUBMITTED,STAGE.HEAD_APPROVED,STAGE.APPROVED,STAGE.REJECTED,STAGE.KRA_SUBMITTED];
+  const checks=[
+    {stored:STAGE.SELF_SUBMITTED,resolved:STAGE.SELF_SUBMITTED},
+    {stored:STAGE.HEAD_SUBMITTED,resolved:STAGE.HEAD_SUBMITTED},
+    {stored:'Head Approved',resolved:STAGE.HEAD_SUBMITTED},
+    {stored:STAGE.APPROVED,resolved:STAGE.APPROVED},
+    {stored:STAGE.REJECTED,resolved:STAGE.REJECTED},
+    {stored:STAGE.READY_SELF,resolved:STAGE.READY_SELF},
+    {stored:'KRA Submitted',resolved:STAGE.READY_SELF}
+  ];
 
-  for(let i=0;i<candidates.length;i++){
-    const candidate=candidates[i];
-
+  for(const check of checks){
     try{
-      const criteria='(ID == '+String(review.ID)+' && Process_Stage == "'+candidate+'")';
+      const criteria='(ID == '+String(review.ID)+' && Process_Stage == "'+check.stored+'")';
       const rows=await getAll(REPORTS.review,criteria);
-
       if(rows.length){
-        review._resolvedStage=candidate;
-        return candidate;
+        review._resolvedStage=check.resolved;
+        review.Process_Stage=check.resolved;
+        if(check.stored!==check.resolved){
+          try{await updateRecord(REPORTS.review,review.ID,{Process_Stage:check.resolved});}catch(migrateErr){console.warn('Legacy stage could not be migrated.',migrateErr);}
+        }
+        return check.resolved;
       }
     }catch(stageError){
       console.warn('Could not resolve Process_Stage by criteria.',stageError);
@@ -236,46 +255,15 @@ async function resolveHeadStage(review,kraPairs,attributes){
     }
   }
 
-  /*
-     MIGRATION FOR OLD RECORDS
-
-     Do NOT guess from Status alone.
-
-     We only treat an old record as Self Rating Submitted when the
-     actual Goal and Role Attribute records prove that the employee
-     completed the entire Self Rating:
-
-     - every task has Achievement
-     - every task has Self Rating 0-5
-     - every Role Attribute has Self Rating 0-5
-  */
-  if(
-    textValue(review.Status).trim()==='Submitted for Approval'
-    &&
-    hasCompleteSelfSubmission(kraPairs,attributes)
-  ){
+  // Migration for old records only when the saved data proves Self Rating was completed.
+  if(textValue(review.Status).trim()==='Submitted for Approval'&&hasCompleteSelfSubmission(kraPairs,attributes)){
     review._resolvedStage=STAGE.SELF_SUBMITTED;
     review.Process_Stage=STAGE.SELF_SUBMITTED;
-
     try{
-      await updateRecord(
-        REPORTS.review,
-        review.ID,
-        {
-          Status:'Submitted for Approval',
-          Process_Stage:STAGE.SELF_SUBMITTED
-        }
-      );
-
-      console.log('Old Review record migrated to Self Rating Submitted:',review.ID);
+      await updateRecord(REPORTS.review,review.ID,{Status:'Submitted for Approval',Process_Stage:STAGE.SELF_SUBMITTED});
     }catch(repairError){
-      /*
-         Still allow this completed Self Rating in the current session.
-         The console keeps the technical repair error for admin/debugging.
-      */
       console.warn('Self Rating is complete, but Process_Stage could not be repaired.',repairError);
     }
-
     return STAGE.SELF_SUBMITTED;
   }
 
@@ -284,122 +272,81 @@ async function resolveHeadStage(review,kraPairs,attributes){
 }
 
 async function loadInitial(){
-  setStatus('Loading employees from Review Report...',null);
+  setStatus('Loading Self Rating submissions...',null);
 
   try{
     const result=await Promise.all([
       getAll(REPORTS.review),
-      getAll(REPORTS.employees)
+      getAll(REPORTS.employees),
+      getAll(REPORTS.kra),
+      getAll(REPORTS.goal),
+      getAll(REPORTS.competency)
     ]);
 
     const allReviews=result[0]||[];
     const masterRows=result[1]||[];
-    const employeeMap={};
+    const allKras=result[2]||[];
+    const allGoals=result[3]||[];
+    const allAttrs=result[4]||[];
 
+    const employeeMap={};
     masterRows.forEach(function(record){
-      employeeMap[String(record.ID)]={
-        ID:String(record.ID),
-        name:employeeMasterName(record),
-        department:textValue(record.Department)
-      };
+      employeeMap[String(record.ID)]={ID:String(record.ID),name:employeeMasterName(record),department:textValue(record.Department)};
     });
 
-    /*
-      IMPORTANT:
-      The employee dropdown is built from Review_Report records.
-      We DO NOT filter by Process_Stage here.
+    const eligible=[];
 
-      This means an employee name cannot disappear only because
-      Process_Stage is blank, hidden from the report, or still at
-      KRA Submitted.
+    for(const review of allReviews){
+      const empId=lookupId(review.Employee_Lookup);
+      if(!empId)continue;
+      const master=employeeMap[String(empId)]||null;
+      const empName=(master&&master.name)||textValue(review.Employee_Lookup)||String(empId);
+      const q=textValue(review.Quarter).trim();
+      const y=textValue(review.Year_field).trim();
 
-      The stage is validated only after the user clicks
-      LOAD APPRAISAL.
-    */
-    state.reviews=allReviews;
+      const kras=allKras.filter(function(k){
+        return employeeFieldMatches(k.Employee_Name,empId,empName)&&same(k.Quarter,q)&&same(k.Year_field1,y);
+      });
+      const pairs=kras.map(function(k){
+        return {kra:k,goals:allGoals.filter(function(g){return lookupId(g.KRA)===String(k.ID);})};
+      });
+      const attrs=allAttrs.filter(function(a){
+        return employeeFieldMatches(a.Employee_Name1,empId,empName)&&same(a.Quarter,q)&&same(a.Year_field1,y);
+      });
+
+      const stage=await resolveHeadStage(review,pairs,attrs);
+      if(stage===STAGE.SELF_SUBMITTED){
+        eligible.push(review);
+      }
+    }
+
+    state.reviews=eligible;
 
     const seen={};
     const employees=[];
-
-    allReviews.forEach(function(review){
+    eligible.forEach(function(review){
       const id=lookupId(review.Employee_Lookup);
       if(!id||seen[id])return;
-
       seen[id]=true;
       const master=employeeMap[String(id)]||null;
-      const lookupName=textValue(review.Employee_Lookup).trim();
-
       employees.push({
         ID:String(id),
-        name:(master&&master.name)||lookupName||String(id),
+        name:(master&&master.name)||textValue(review.Employee_Lookup)||String(id),
         department:textValue(review.Department)||(master&&master.department)||''
       });
     });
 
-    /*
-      Fallback:
-      If Employee_Lookup is not visible in Review_Report, Creator's
-      getAllRecords response may not contain it. In that case, use
-      All_Employees and ask Review_Report whether each employee has
-      at least one Review record by criteria.
-    */
-    if(employees.length===0 && masterRows.length>0){
-      setStatus('Review Report loaded. Resolving employee lookups...',null);
-
-      for(let i=0;i<masterRows.length;i++){
-        const masterRecord=masterRows[i];
-        const employeeId=String(masterRecord.ID);
-
-        try{
-          const rows=await getAll(
-            REPORTS.review,
-            '(Employee_Lookup == '+employeeId+')'
-          );
-
-          if(rows.length>0){
-            employees.push({
-              ID:employeeId,
-              name:employeeMasterName(masterRecord),
-              department:textValue(masterRecord.Department)
-            });
-          }
-        }catch(employeeLookupError){
-          console.warn('Could not check Review Report for employee '+employeeId,employeeLookupError);
-        }
-      }
-    }
-
     state.employees=employees;
-
-    document.getElementById('empSelect').innerHTML=
-      '<option value="">-- Select --</option>'+
-      employees.map(function(employee){
-        return '<option value="'+esc(employee.ID)+'">'+esc(employee.name)+'</option>';
-      }).join('');
+    document.getElementById('empSelect').innerHTML='<option value="">-- Select --</option>'+employees.map(function(employee){return '<option value="'+esc(employee.ID)+'">'+esc(employee.name)+'</option>';}).join('');
 
     if(employees.length){
-      setStatus(
-        employees.length+' employee(s) found in Review Report. Select Quarter/Year and load appraisal.',
-        true
-      );
-    }else if(allReviews.length===0){
-      setStatus('Review_Report has no records.',false);
-      showModal(
-        'Review Report is empty',
-        'No records were returned from Review_Report. First confirm that the Review form contains records and that Review_Report is the correct report link name.',
-        'error'
-      );
+      setStatus(employees.length+' Self Rating submission(s) ready for Department Head Review.',true);
     }else{
-      setStatus('Review records exist, but Employee_Lookup could not be resolved.',false);
-      showModal(
-        'Employee field not available',
-        'Review_Report returned records, but Employee_Lookup could not be resolved. Make Employee_Lookup visible in Review_Report, then refresh this page.',
-        'error'
-      );
+      setStatus('No Self Rating submissions waiting for Department Head Review.',true);
     }
   }catch(err){
-    friendlyError(err,'Employees could not be loaded from Review Report.');
-    setStatus('Review Report loading failed.',false);
+    friendlyError(err,'Department Head pending appraisals could not be loaded.');
+    setStatus('Load failed.',false);
   }
 }
 
@@ -545,10 +492,60 @@ function validateSettings(){return Math.abs((state.settings.kraWeight+state.sett
 function validateHeadRatings(){for(const p of state.kras){for(const g of p.goals){if(!ratingValid(g.Appraiser_Rating))return'Enter Department Head Rating from 0 to 5 for every task.'}}for(const a of state.competencies){if(!ratingValid(a.Appraiser_Rating))return'Enter Department Head Rating from 0 to 5 for every Role Attribute.'}return''}
 function ratingLabel(v){const n=numberValue(v,0);if(n>=4.5)return'Outstanding';if(n>=4)return'Exceeds Expectations';if(n>=3)return'Meets Expectations';if(n>=2)return'Needs Improvement';return'Unacceptable'}
 async function saveAllRatings(){const updates=[];for(const p of state.kras){for(const g of p.goals){if(String(textValue(g.Appraiser_Rating)).trim()!=='')updates.push(updateRecord(REPORTS.goal,g.ID,{Appraiser_Rating:num(g.Appraiser_Rating,2)}))}}for(const a of state.competencies){if(String(textValue(a.Appraiser_Rating)).trim()!=='')updates.push(updateRecord(REPORTS.competency,a.ID,{Appraiser_Rating:num(a.Appraiser_Rating,2)}))}await Promise.all(updates)}
-function reviewScoreFields(stage){const s=calculateScores();const fields={Appraiser_Comments:document.getElementById('apprComments').value,KRA_Section_Weight:num(state.settings.kraWeight),Role_Attribute_Weight:num(state.settings.roleWeight),Self_KRA_Rating:num(s.selfKra),Self_Role_Rating:num(s.selfRole),Self_Overall_Rating:num(s.selfOverall),Head_KRA_Rating:num(s.headKra),Head_Role_Rating:num(s.headRole),Head_Overall_Rating:num(s.headOverall),Final_Appraisal_Rating:num(s.finalOverall),Overall_Rating:ratingLabel(s.finalOverall)};if(stage){fields.Process_Stage=stage;if(stage===STAGE.HEAD_APPROVED)fields.Status='Submitted for Approval';if(stage===STAGE.APPROVED)fields.Status='Approved'}return fields}
+function reviewScoreFields(stage){const s=calculateScores();const fields={Appraiser_Comments:document.getElementById('apprComments').value,KRA_Section_Weight:num(state.settings.kraWeight),Role_Attribute_Weight:num(state.settings.roleWeight),Self_KRA_Rating:num(s.selfKra),Self_Role_Rating:num(s.selfRole),Self_Overall_Rating:num(s.selfOverall),Head_KRA_Rating:num(s.headKra),Head_Role_Rating:num(s.headRole),Head_Overall_Rating:num(s.headOverall),Final_Appraisal_Rating:num(s.finalOverall),Overall_Rating:ratingLabel(s.finalOverall)};if(stage){fields.Process_Stage=stage;if(stage===STAGE.HEAD_SUBMITTED)fields.Status='Submitted for Approval';if(stage===STAGE.APPROVED)fields.Status='Approved'}return fields}
+
+function lockHeadReview(){
+  const ids=['settingKraWeight','settingRoleWeight','apprComments','saveBtn','rejectBtn','approveBtn'];
+  ids.forEach(function(id){const el=document.getElementById(id);if(el)el.disabled=true;});
+  const inputs=document.querySelectorAll('#kraArea input,#kraArea textarea,#kraArea select,#attrArea input,#attrArea textarea,#attrArea select');
+  inputs.forEach(function(el){el.disabled=true;});
+}
 
 async function saveDraft(){if(!state.review)return;if(!validateSettings()){showModal('Performance Settings','KRA Section Weight + Role Attribute Weight must equal 100%.','error');return}setBusy('saveBtn',true,'Saving...');try{await saveAllRatings();await updateRecord(REPORTS.review,state.review.ID,reviewScoreFields(null));showModal('Draft saved','Department Head ratings and Performance Settings were saved.','success');setStatus('Draft saved.',true)}catch(err){friendlyError(err,'Draft could not be saved.')}finally{setBusy('saveBtn',false)}}
-async function approveAppraisal(){if(!state.review)return;if(!validateSettings()){showModal('Performance Settings','KRA Section Weight + Role Attribute Weight must equal 100%.','error');return}const problem=validateHeadRatings();if(problem){showModal('Department Head Review',problem,'error');return}setBusy('approveBtn',true,'Approving...');try{await saveAllRatings();const fields=reviewScoreFields(STAGE.HEAD_APPROVED);await updateRecord(REPORTS.review,state.review.ID,fields);state.review.Status='Submitted for Approval';state.review.Process_Stage=STAGE.HEAD_APPROVED;document.getElementById('statusBadge').textContent=STAGE.HEAD_APPROVED;showModal('Approved','Department Head review was approved. Overall Head Rating and Final Appraisal Rating were calculated automatically and the appraisal was sent to the next stage.','success');setStatus('Approved and sent to next stage.',true);document.getElementById('saveBtn').disabled=true;document.getElementById('rejectBtn').disabled=true;document.getElementById('approveBtn').disabled=true}catch(err){friendlyError(err,'Approval could not be completed.')}finally{setBusy('approveBtn',false)}}
+async function approveAppraisal(){
+  if(!state.review)return;
+  if(!validateSettings()){
+    showModal('Performance Settings','KRA Section Weight + Role Attribute Weight must equal 100%.','error');
+    return;
+  }
+  const problem=validateHeadRatings();
+  if(problem){showModal('Department Head Review',problem,'error');return;}
+
+  setBusy('approveBtn',true,'Submitting...');
+  setStatus('Submitting Department Head rating...',null);
+
+  try{
+    await saveAllRatings();
+    const fields=reviewScoreFields(STAGE.HEAD_SUBMITTED);
+    fields.Status='Submitted for Approval';
+    fields.Process_Stage=STAGE.HEAD_SUBMITTED;
+
+    await updateRecord(REPORTS.review,state.review.ID,fields);
+
+    state.review.Status='Submitted for Approval';
+    state.review.Process_Stage=STAGE.HEAD_SUBMITTED;
+    state.review._resolvedStage=STAGE.HEAD_SUBMITTED;
+    document.getElementById('statusBadge').textContent=STAGE.HEAD_SUBMITTED;
+
+    lockHeadReview();
+
+    const scores=calculateScores();
+    showModal(
+      'Department Head Rating Submitted',
+      'Department Head rating was submitted successfully and is now locked. The appraisal is available in HR Final Review.\n\nHead Overall Rating: '+scores.headOverall.toFixed(2)+' / 5\nFinal Appraisal Rating: '+scores.finalOverall.toFixed(2)+' / 5',
+      'success'
+    );
+    setStatus('Department Head rating submitted and locked. Ready for HR Review.',true);
+  }catch(err){
+    friendlyError(err,'Department Head rating could not be submitted.');
+    setStatus('Submission failed.',false);
+  }finally{
+    // Do not unlock after successful submission.
+    if(getStage(state.review)!==STAGE.HEAD_SUBMITTED){
+      setBusy('approveBtn',false);
+    }
+  }
+}
 function rejectAppraisal(){if(!state.review)return;const box=document.getElementById('rejectBox');if(box.classList.contains('hidden')){box.classList.remove('hidden');document.getElementById('rejectComments').focus();return}const comments=document.getElementById('rejectComments').value.trim();if(!comments){showModal('Reject appraisal','Enter rejection comments.','error');return}setBusy('rejectBtn',true,'Rejecting...');updateRecord(REPORTS.review,state.review.ID,{Status:'Rejected',Process_Stage:STAGE.REJECTED,Rejection_Comments:comments,Appraiser_Comments:document.getElementById('apprComments').value}).then(()=>{showModal('Rejected','The appraisal was rejected. The submitted Self Rating remains locked.','success');setStatus('Appraisal rejected.',true);document.getElementById('saveBtn').disabled=true;document.getElementById('rejectBtn').disabled=true;document.getElementById('approveBtn').disabled=true}).catch(err=>friendlyError(err,'Rejection could not be completed.')).finally(()=>setBusy('rejectBtn',false))}
 
 
